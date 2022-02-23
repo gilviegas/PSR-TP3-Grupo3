@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/PSR-TP3-Grupo3.iml" filepath="$PROJECT_DIR$/.idea/PSR-TP3-Grupo3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../.idea/catkin_ws.iml" filepath="$PROJECT_DIR$/../../.idea/catkin_ws.iml" />
     </modules>
   </component>
 </project>

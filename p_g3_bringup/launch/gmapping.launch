@@ -1,6 +1,6 @@
 <launch>
     <!-- Argumentos do launch file.-->
-    <arg name="player_name" default="p_pribeiro"/>
+    <arg name="player_name" default="p_g3"/>
 
     <group ns="$(arg player_name)">
         <node pkg="gmapping" type="slam_gmapping" name="gmapping" output="screen">

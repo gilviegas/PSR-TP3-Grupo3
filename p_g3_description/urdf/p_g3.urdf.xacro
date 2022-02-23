@@ -3,7 +3,7 @@
 
   <!-- Arguments -->
   <!-- Arguments are used as:  -->
-  <xacro:arg name="player_name" default="p_pribeiro"/>
+  <xacro:arg name="player_name" default="p_g3"/>
   <xacro:arg name="player_color" default="Red"/>          <!-- Color must exist in Gazebo/Colors and be defined in properties.xacro.-->
 
   <!-- Copy arguments to properties so that they are visible in the included xacros -->
@@ -12,9 +12,9 @@
   <xacro:property name="player_color" value="$(arg player_color)"/>
 
   <!-- Includes -->
-  <xacro:include filename="$(find p_pribeiro_description)/urdf/properties.xacro"/>
+  <xacro:include filename="$(find p_g3_description)/urdf/properties.xacro"/>
   <xacro:include filename="$(find turtlebot3_description)/urdf/common_properties.xacro"/>
-  <xacro:include filename="$(find p_pribeiro_description)/urdf/p_pribeiro.gazebo.xacro"/>
+  <xacro:include filename="$(find p_g3_description)/urdf/p_g3.gazebo.xacro"/>
 
   <!-- Define links and joins -->
   <link name="base_footprint"/>

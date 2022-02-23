@@ -1,6 +1,6 @@
 <launch>
     <!--Bloco 1: argumentos do launch file.-->
-    <arg name="player_name" default="p_pribeiro"/>
+    <arg name="player_name" default="p_g3"/>
     <arg name="x_pos" default="-3.0"/>
     <arg name="y_pos" default="1.0"/>
     <arg name="z_pos" default="0.0"/>

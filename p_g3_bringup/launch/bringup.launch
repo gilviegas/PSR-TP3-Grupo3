@@ -1,24 +1,25 @@
 <launch>
 
-    <rosparam command="load" file="$(find p_pribeiro_bringup)/params/game.yaml"/>
+    <rosparam command="load" file="$(find p_g3_bringup)/params/game.yaml"/>
 
     <!--Bloco 1: argumentos do launch file.-->
     <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
-    <arg name="player_name" default="p_pribeiro"/>   # To set player name.
+    <arg name="player_name" default="p_g3"/>   # To set player name.
     <arg name="player_color" default="Red"/>        # To set player color.
     <arg name="visualize" default="True"/>          # To set if we want to see rviz or not.
     <arg name="x_pos" default="0.0"/>
     <arg name="y_pos" default="-1.5"/>
     <arg name="z_pos" default="0.0"/>
+    <arg name="driver" default="true"/>
 
     <group ns = "$(arg player_name)">
         <param name="tf_prefix" value="$(arg player_name)"></param>
         <!--Bloco 3: Carregamento do xacro do robot para o parâmetro robot_description.-->
-        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find p_pribeiro_description)/urdf/p_pribeiro.urdf.xacro player_name:=$(arg player_name) player_color:=$(arg player_color)"/>
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find p_g3_description)/urdf/p_g3.urdf.xacro player_name:=$(arg player_name) player_color:=$(arg player_color)"/>
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
         <!--Include do spawn.launch.-->
-        <include file="$(find p_pribeiro_bringup)/launch/spawn.launch">
+        <include file="$(find p_g3_bringup)/launch/spawn.launch">
             <arg name="player_name" value="$(arg player_name)"/>
             <arg name="x_pos" value="$(arg x_pos)"/>
             <arg name="y_pos" value="$(arg y_pos)"/>
@@ -27,13 +28,16 @@
 
         <group if = "$(arg visualize)">
             <!--Include do visualize.launch.-->
-            <include file="$(find p_pribeiro_bringup)/launch/visualize.launch">
+            <include file="$(find p_g3_bringup)/launch/visualize.launch">
                 <arg name="player_name" value="$(arg player_name)"/>
             </include>
         </group>
     </group>
-
+    <group if="$(arg driver)">
+        <node name="$(arg player_name)"  pkg="p_g3_driver"  type="driver" output="screen">
+        </node>
+    </group>
 <!--    &lt;!&ndash; Run driver.py script to each player &ndash;&gt;-->
-<!--    <node pkg="p_pribeiro_player" type="driver.py" name="$(arg player_name)" output="screen"> </node>-->
+<!--    <node pkg="p_g3_player" type="driver.py" name="$(arg player_name)" output="screen"> </node>-->
 
 </launch>
