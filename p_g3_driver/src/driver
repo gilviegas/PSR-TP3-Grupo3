@@ -56,8 +56,8 @@ class Driver:
         topic_laser = "/" + self.player + '/scan'
         # Topics subscription
         # self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLaserCallback)
-        self.subscriber_camera = rospy.Subscriber(topic_camera, CameraInfo, self.getCameraCallback)
-        # self.subscriber_backcamera = rospy.Subscriber(topic_backcamera, CameraInfo, self.getBackCameraCallback)
+        self.subscriber_camera = rospy.Subscriber(topic_camera, Image, self.getCameraCallback)
+        # self.subscriber_backcamera = rospy.Subscriber(topic_backcamera, Image, self.getBackCameraCallback)
 
     def getCameraCallback(self, image_message):
         bridge = CvBridge()
