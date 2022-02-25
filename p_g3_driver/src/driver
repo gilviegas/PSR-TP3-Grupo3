@@ -62,6 +62,8 @@ class Driver:
     def getCameraCallback(self, image_message):
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(image_message, desired_encoding='passthrough')
+        cv2.imshow('teste', cv_image)
+        cv2.waitKey(1)
 
 
     # def laser_to_camera(self, camera, laser_points):
@@ -75,7 +77,6 @@ def main():
     topic = 'chatter'
     rospy.init_node('p_g3_driver', anonymous=False)
     # Testing
-
     rospy.loginfo("I'm " + Driver().player + ", from team " + Driver().team +
                   "\nI want to catch " + Driver().prey + " but I fear " + Driver().hunter)
     rospy.spin()
