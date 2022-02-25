@@ -5,6 +5,7 @@ import rospy
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
 from cv_bridge import CvBridge
 import cv2
+import message_filters
 
 # ---------------------------------------------------
 #   Parameters
@@ -29,6 +30,9 @@ upper_blue = np.array([256, 40, 40])
 class Driver:
     def __init__(self):
         # Get team, hunter and prey
+        self.bridge = CvBridge()
+        self.backcameraimage = None
+        self.frontcameraimage = None
         self.allplayers = {'red': rospy.get_param('/red_players'),
                            'green': rospy.get_param('/green_players'),
                            'blue': rospy.get_param('/blue_players')}
@@ -56,15 +60,17 @@ class Driver:
         topic_laser = "/" + self.player + '/scan'
         # Topics subscription
         # self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLaserCallback)
-        self.subscriber_camera = rospy.Subscriber(topic_camera, Image, self.getCameraCallback)
-        # self.subscriber_backcamera = rospy.Subscriber(topic_backcamera, Image, self.getBackCameraCallback)
+        self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
+        self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
+        ts = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1)
+        ts.registerCallback(self.getCameraCallback)
 
-    def getCameraCallback(self, image_message):
-        bridge = CvBridge()
-        cv_image = bridge.imgmsg_to_cv2(image_message, desired_encoding='passthrough')
-        cv2.imshow('teste', cv_image)
+    def getCameraCallback(self,data_front, data_back):
+        cv_frontimage = self.bridge.imgmsg_to_cv2(data_front, "bgr8")
+        cv_backimage = self.bridge.imgmsg_to_cv2(data_back, "bgr8")
+        cv2.imshow('frente', cv_frontimage)
+        cv2.imshow('tras', cv_backimage)
         cv2.waitKey(1)
-
 
     # def laser_to_camera(self, camera, laser_points):
     #     laser_points_cameraframe = []
@@ -74,9 +80,9 @@ class Driver:
 
 
 def main():
-    topic = 'chatter'
     rospy.init_node('p_g3_driver', anonymous=False)
     # Testing
+
     rospy.loginfo("I'm " + Driver().player + ", from team " + Driver().team +
                   "\nI want to catch " + Driver().prey + " but I fear " + Driver().hunter)
     rospy.spin()
