@@ -75,6 +75,7 @@ def main():
     topic = 'chatter'
     rospy.init_node('p_g3_driver', anonymous=False)
     # Testing
+
     rospy.loginfo("I'm " + Driver().player + ", from team " + Driver().team +
                   "\nI want to catch " + Driver().prey + " but I fear " + Driver().hunter)
     rospy.spin()
