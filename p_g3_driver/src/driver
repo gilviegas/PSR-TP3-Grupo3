@@ -2,6 +2,7 @@
 
 import numpy as np
 import rospy
+import tf2_ros
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
 from cv_bridge import CvBridge
 import cv2
@@ -25,10 +26,14 @@ class Driver:
         # ---------------------------------------------------
         topic_camera = "/" + self.player + '/camera/rgb/image_raw'
         topic_backcamera = "/" + self.player + '/back_camera/rgb/image_raw'
+        topic_camera_info = "/" + self.player + '/camera/rgb/camera_info'
+        topic_backcamera_info = "/" + self.player + '/back_camera/rgb/camera_info'
         topic_laser = "/" + self.player + '/scan'
         self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLidarPointsCallback)
         self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
         self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
+        self.subscriber_camera_info = message_filters.Subscriber(topic_camera_info, CameraInfo)
+        self.subscriber_backcamera_info = message_filters.Subscriber(topic_backcamera_info, CameraInfo)
         # ---------------------------------------------------
         #   Masks
         # ---------------------------------------------------
@@ -48,12 +53,23 @@ class Driver:
         self.bridge = CvBridge()
         self.backcameraimage = None
         self.frontcameraimage = None
-        ts = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1)
-        ts.registerCallback(self.getCameraCallback)
+        ts_image = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1)
+        ts_image.registerCallback(self.getCameraCallback)
         # ---------------------------------------------------
-        #   Get Laser points
+        #   Get info from the cameras
         # ---------------------------------------------------
-        self.points = []
+        self.front_intrinsic = None
+        self.front_width = None
+        self.front_height = None
+        self.back_intrinsic = None
+        self.back_width = None
+        self.back_height = None
+        ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info], 1)
+        ts_imageinfo.registerCallback(self.getCameraInfoCallback)
+        # ---------------------------------------------------
+        #   Laser points
+        # ---------------------------------------------------
+        self.laserpoints = []
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -82,9 +98,22 @@ class Driver:
         cv_backimage = self.bridge.imgmsg_to_cv2(data_back, "bgr8")
         # Testing
         # TODO Meter parametro para escolher visualizar imagem ou não
-        # cv2.imshow('frente', cv_frontimage)
-        # cv2.imshow('tras', cv_backimage)
-        # cv2.waitKey(1)
+        cv2.imshow('frente', cv_frontimage)
+        cv2.imshow('tras', cv_backimage)
+        cv2.waitKey(1)
+
+    def getCameraInfoCallback(self, data_front, data_back):
+        # self.front_height = data_front.height
+        # self.front_width = data_front.width
+        self.front_intrinsic = data_front.K
+        # self.back_height = data_back.height
+        # self.back_width = data_back.width
+        self.back_intrinsic = data_back.K
+        # Testing
+        print(self.player + ' Frontal')
+        print(self.front_intrinsic)
+        print(self.player + ' Traseira')
+        print(self.back_intrinsic)
 
     def getLidarPointsCallback(self, msg):
         z = 0
@@ -92,7 +121,7 @@ class Driver:
             theta = msg.angle_min + idx * msg.angle_increment
             x = range * math.cos(theta)
             y = range * math.sin(theta)
-            self.points.append([x, y, z, 1])
+            self.laserpoints.append([x, y, z, 1])
         # Testing
         # print(self.points)
 
