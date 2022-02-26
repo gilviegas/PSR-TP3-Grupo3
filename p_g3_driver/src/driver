@@ -6,6 +6,7 @@ from sensor_msgs.msg import Image, LaserScan, CameraInfo
 from cv_bridge import CvBridge
 import cv2
 import message_filters
+import math
 
 
 class Driver:
@@ -25,7 +26,7 @@ class Driver:
         topic_camera = "/" + self.player + '/camera/rgb/image_raw'
         topic_backcamera = "/" + self.player + '/back_camera/rgb/image_raw'
         topic_laser = "/" + self.player + '/scan'
-        # self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLaserCallback)
+        self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLidarPointsCallback)
         self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
         self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
         # ---------------------------------------------------
@@ -49,6 +50,10 @@ class Driver:
         self.frontcameraimage = None
         ts = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1)
         ts.registerCallback(self.getCameraCallback)
+        # ---------------------------------------------------
+        #   Get Laser points
+        # ---------------------------------------------------
+        self.points = []
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -76,9 +81,20 @@ class Driver:
         cv_frontimage = self.bridge.imgmsg_to_cv2(data_front, "bgr8")
         cv_backimage = self.bridge.imgmsg_to_cv2(data_back, "bgr8")
         # Testing
-        cv2.imshow('frente', cv_frontimage)
-        cv2.imshow('tras', cv_backimage)
-        cv2.waitKey(1)
+        # TODO Meter parametro para escolher visualizar imagem ou não
+        # cv2.imshow('frente', cv_frontimage)
+        # cv2.imshow('tras', cv_backimage)
+        # cv2.waitKey(1)
+
+    def getLidarPointsCallback(self, msg):
+        z = 0
+        for idx, range in enumerate(msg.ranges):
+            theta = msg.angle_min + idx * msg.angle_increment
+            x = range * math.cos(theta)
+            y = range * math.sin(theta)
+            self.points.append([x, y, z, 1])
+        # Testing
+        # print(self.points)
 
     # def laser_to_camera(self, camera, laser_points):
     #     laser_points_cameraframe = []
