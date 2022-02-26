@@ -205,7 +205,7 @@
         <cameraName>back_camera</cameraName>
         <frameName>back_camera_rgb_optical_frame</frameName>
         <imageTopicName>rgb/image_raw</imageTopicName>
-        <cameraInfoTopicName>back_camera/rgb/camera_info</cameraInfoTopicName>
+        <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
         <hackBaseline>0.07</hackBaseline>
         <distortionK1>0.0</distortionK1>
         <distortionK2>0.0</distortionK2>
