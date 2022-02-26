@@ -2,12 +2,14 @@
 
 import numpy as np
 import rospy
-import tf2_ros
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
+from tf2_geometry_msgs import PoseStamped, tf2_geometry_msgs
+from geometry_msgs.msg import Point
 from cv_bridge import CvBridge
 import cv2
 import message_filters
 import math
+import tf2_ros
 
 
 class Driver:
@@ -64,12 +66,16 @@ class Driver:
         self.back_intrinsic = None
         self.back_width = None
         self.back_height = None
-        ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info], 1)
+        ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info],
+                                                        1)
         ts_imageinfo.registerCallback(self.getCameraInfoCallback)
         # ---------------------------------------------------
         #   Laser points
         # ---------------------------------------------------
-        self.laserpoints = []
+        self.lidarpoints_frontcamera = []
+        self.lidarpoints_backcamera = []
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -93,27 +99,27 @@ class Driver:
             self.hunter = 'No one'
             self.prey = 'No one'
 
-    def getCameraCallback(self, data_front, data_back):
-        cv_frontimage = self.bridge.imgmsg_to_cv2(data_front, "bgr8")
-        cv_backimage = self.bridge.imgmsg_to_cv2(data_back, "bgr8")
-        # Testing
+    def getCameraCallback(self, msg_front, msg_back):
+        self.frontcameraimage = self.bridge.imgmsg_to_cv2(msg_front, "bgr8")
+        self.backcameraimage = self.bridge.imgmsg_to_cv2(msg_back, "bgr8")
         # TODO Meter parametro para escolher visualizar imagem ou não
-        cv2.imshow('frente', cv_frontimage)
-        cv2.imshow('tras', cv_backimage)
-        cv2.waitKey(1)
-
-    def getCameraInfoCallback(self, data_front, data_back):
-        # self.front_height = data_front.height
-        # self.front_width = data_front.width
-        self.front_intrinsic = data_front.K
-        # self.back_height = data_back.height
-        # self.back_width = data_back.width
-        self.back_intrinsic = data_back.K
         # Testing
-        print(self.player + ' Frontal')
-        print(self.front_intrinsic)
-        print(self.player + ' Traseira')
-        print(self.back_intrinsic)
+        # cv2.imshow('frente', self.frontcameraimage)
+        # cv2.imshow('tras', self.backcameraimage)
+        # cv2.waitKey(1)
+
+    def getCameraInfoCallback(self, msg_front, msg_back):
+        self.front_height = msg_front.height
+        self.front_width = msg_front.width
+        self.front_intrinsic = msg_front.K
+        self.back_height = msg_back.height
+        self.back_width = msg_back.width
+        self.back_intrinsic = msg_back.K
+        # Testing
+        # print(self.player + ' Frontal')
+        # print(self.front_intrinsic)
+        # print(self.player + ' Traseira')
+        # print(self.back_intrinsic)
 
     def getLidarPointsCallback(self, msg):
         z = 0
@@ -121,13 +127,31 @@ class Driver:
             theta = msg.angle_min + idx * msg.angle_increment
             x = range * math.cos(theta)
             y = range * math.sin(theta)
-            self.laserpoints.append([x, y, z, 1])
-        # Testing
-        # print(self.points)
-
-    # def laser_to_camera(self, camera, laser_points):
-    #     laser_points_cameraframe = []
-
+            posestamped = PoseStamped()
+            posestamped.header.frame_id = self.player + "/base_scan"
+            posestamped.header.stamp = rospy.Time(0)
+            point = Point()
+            point.x = x
+            point.y = y
+            point.z = z
+            posestamped.pose.position = point
+            transform_front = self.tf_buffer.lookup_transform(self.player + "/camera_rgb_frame",
+                                                              posestamped.header.frame_id,
+                                                              posestamped.header.stamp,
+                                                              rospy.Duration(1))
+            transform_back = self.tf_buffer.lookup_transform(self.player + "/back_camera_rgb_frame",
+                                                             posestamped.header.frame_id,
+                                                             posestamped.header.stamp,
+                                                             rospy.Duration(1))
+            lidarpoint_frontcamera = tf2_geometry_msgs.do_transform_pose(posestamped, transform_front)
+            lidarpoint_backcamera = tf2_geometry_msgs.do_transform_pose(posestamped, transform_back)
+            self.lidarpoints_frontcamera.append(lidarpoint_frontcamera)
+            self.lidarpoints_backcamera.append(lidarpoint_backcamera)
+            # Testing
+        print('front')
+        print(self.lidarpoints_frontcamera)
+        print('back')
+        print(self.lidarpoints_backcamera)
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
