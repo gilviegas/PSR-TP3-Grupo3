@@ -19,8 +19,11 @@ class Driver:
         #   Get team, hunter and prey
         # ---------------------------------------------------
         self.team = ''
+        self.team_colors = []
         self.hunter = ''
+        self.hunter_colors = []
         self.prey = ''
+        self.prey_colors = []
         self.player = ''
         self.allplayers = ''
         self.team_identification()
@@ -38,19 +41,6 @@ class Driver:
         self.subscriber_camera_info = message_filters.Subscriber(topic_camera_info, CameraInfo)
         self.subscriber_backcamera_info = message_filters.Subscriber(topic_backcamera_info, CameraInfo)
         # ---------------------------------------------------
-        #   Masks
-        # ---------------------------------------------------
-        # TODO Verificar valores
-        #   Red color
-        lower_red = np.array([0, 0, 90])
-        upper_red = np.array([40, 40, 256])
-        #   Green color
-        lower_green = np.array([0, 90, 0])
-        upper_green = np.array([40, 256, 40])
-        #   Blue color
-        lower_blue = np.array([90, 0, 0])
-        upper_blue = np.array([256, 40, 40])
-        # ---------------------------------------------------
         #   Get image from the cameras
         # ---------------------------------------------------
         self.bridge = CvBridge()
@@ -67,8 +57,8 @@ class Driver:
         self.back_intrinsic = None
         self.back_width = None
         self.back_height = None
-        ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info],
-                                                        1)
+        ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info,
+                                                         self.subscriber_backcamera_info], 1)
         ts_imageinfo.registerCallback(self.getCameraInfoCallback)
         # ---------------------------------------------------
         #   Laser points
@@ -85,18 +75,36 @@ class Driver:
                            'green': rospy.get_param('/green_players'),
                            'blue': rospy.get_param('/blue_players')}
         self.player = rospy.get_name().strip('/')
+        #   Red color
+        lower_red = np.array([0, 0, 0])
+        upper_red = np.array([0, 38, 230])
+        #   Green color
+        lower_green = np.array([4, 144, 0])
+        upper_green = np.array([42, 256, 10])
+        #   Blue color
+        lower_blue = np.array([105, 0, 3])
+        upper_blue = np.array([255, 13, 25])
         if self.player in self.allplayers['red']:
             self.team = 'red'
+            self.team_colors = [lower_red, upper_red]
             self.hunter = 'blue'
+            self.hunter_colors = [lower_blue, upper_blue]
             self.prey = 'green'
+            self.prey_colors = [lower_green, upper_green]
         elif self.player in self.allplayers['green']:
             self.team = 'green'
+            self.team_colors = [lower_green, upper_green]
             self.hunter = 'red'
+            self.hunter_colors = [lower_red, upper_red]
             self.prey = 'blue'
+            self.prey_colors = [lower_blue, upper_blue]
         elif self.player in self.allplayers['blue']:
             self.team = 'blue'
+            self.team_colors = [lower_blue, upper_blue]
             self.hunter = 'green'
+            self.hunter_colors = [lower_green, upper_green]
             self.prey = 'red'
+            self.prey_colors = [lower_red, upper_red]
         else:
             self.team = 'Alone'
             self.hunter = 'No one'
@@ -105,7 +113,9 @@ class Driver:
     def getCameraCallback(self, msg_front, msg_back):
         self.frontcameraimage = self.bridge.imgmsg_to_cv2(msg_front, "bgr8")
         self.backcameraimage = self.bridge.imgmsg_to_cv2(msg_back, "bgr8")
-        self.image_lidar()
+        self.mask(self.frontcameraimage, 'front')
+        self.mask(self.backcameraimage, 'back')
+        # self.image_lidar()
         # print('back')
         # print(self.lidarpixels_backcamera)
         # print('front')
@@ -124,11 +134,6 @@ class Driver:
         self.back_height = msg_back.height
         self.back_width = msg_back.width
         self.back_intrinsic = np.asarray(msg_back.K).reshape(3, 3)
-        # Testing
-        # print(self.player + ' Frontal')
-        # print(self.front_intrinsic)
-        # print(self.player + ' Traseira')
-        # print(self.back_intrinsic)
 
     def getLidarPointsCallback(self, msg):
         z = 0
@@ -152,11 +157,10 @@ class Driver:
             if posestamped_back.pose.position.x > 0:
                 posestamped_back.pose.position.x = math.inf
                 posestamped_back.pose.position.y = math.inf
-            print(posestamped_front.pose.position.x)
             self.lidar_points_to_pixels(posestamped_back, self.player + "/back_camera_rgb_optical_frame",
                                         self.back_intrinsic, self.lidarpixels_backcamera)
-            self.lidar_points_to_pixels(posestamped_front, self.player + "/camera_rgb_optical_frame", self.front_intrinsic,
-                                        self.lidarpixels_frontcamera)
+            self.lidar_points_to_pixels(posestamped_front, self.player + "/camera_rgb_optical_frame",
+                                        self.front_intrinsic, self.lidarpixels_frontcamera)
 
     def lidar_points_to_pixels(self, posestamped, frame, intrinsic, output):
         transform = self.tf_buffer.lookup_transform(frame,
@@ -184,6 +188,15 @@ class Driver:
                            markerSize=40, thickness=2, line_type=cv2.LINE_AA)
         cv2.imshow(self.player + ' frontal', self.frontcameraimage)
         cv2.imshow(self.player + ' traseira', self.backcameraimage)
+        cv2.waitKey(1)
+
+    def mask(self, image, teste):
+        mask_team = cv2.inRange(image, self.team_colors[0], self.team_colors[1])
+        mask_hunter = cv2.inRange(image, self.hunter_colors[0], self.hunter_colors[1])
+        mask_prey = cv2.inRange(image, self.prey_colors[0], self.prey_colors[1])
+        # test
+        cv2.imshow(teste + self.player + ' hunter', mask_hunter)
+        cv2.imshow(teste + self.player + ' prey', mask_prey)
         cv2.waitKey(1)
 
 

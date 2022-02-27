@@ -51,7 +51,7 @@
         <arg name="x_pos" value="-1.5"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="driver" value="true"/>
+        <arg name="driver" value="false"/>
     </include>
 
     <include file="$(find p_g3_bringup)/launch/gmapping.launch">
@@ -91,7 +91,7 @@
         <arg name="x_pos" value="-2.0"/>
         <arg name="y_pos" value="0.5"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="driver" value="true"/>
+        <arg name="driver" value="false"/>
     </include>
 
     <include file="$(find p_g3_bringup)/launch/gmapping.launch">
