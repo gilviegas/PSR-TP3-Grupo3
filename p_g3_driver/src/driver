@@ -79,6 +79,8 @@ class Driver:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
+
+
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
                            'green': rospy.get_param('/green_players'),
@@ -104,6 +106,12 @@ class Driver:
     def getCameraCallback(self, msg_front, msg_back):
         self.frontcameraimage = self.bridge.imgmsg_to_cv2(msg_front, "bgr8")
         self.backcameraimage = self.bridge.imgmsg_to_cv2(msg_back, "bgr8")
+        self.image_lidar()
+        # print('back')
+        # print(self.lidarpixels_backcamera)
+        # print('front')
+        # print(self.lidarpixels_frontcamera)
+
         # TODO Meter parametro para escolher visualizar imagem ou não
         # Testing
         # cv2.imshow('frente', self.frontcameraimage)
@@ -142,27 +150,52 @@ class Driver:
                                                               posestamped.header.stamp,
                                                               rospy.Duration(1))
             lidarpoint_frontcamera = tf2_geometry_msgs.do_transform_pose(posestamped, transform_front)
-            lidarpixel_frontcamera_aux1 = np.dot(self.front_intrinsic, np.array([[lidarpoint_frontcamera.pose.position.x], [lidarpoint_frontcamera.pose.position.y], [lidarpoint_frontcamera.pose.position.z]]))
-            lidarpixel_frontcamera_aux2 = np.array([[lidarpixel_frontcamera_aux1[0, 0]/lidarpixel_frontcamera_aux1[2, 0]], [lidarpixel_frontcamera_aux1[1, 0]/lidarpixel_frontcamera_aux1[2, 0]]])
-            if 0 < lidarpixel_frontcamera_aux2[0, 0] < self.front_width and 0 < lidarpixel_frontcamera_aux2[1, 0] < self.front_height:
-                lidarpixel_frontcamera = np.array([[round(lidarpixel_frontcamera_aux2[0, 0])], [round(lidarpixel_frontcamera_aux2[1, 0])]])
+            lidarpixel_frontcamera_aux1 = np.dot(self.front_intrinsic,
+                                                 np.array([[lidarpoint_frontcamera.pose.position.x],
+                                                           [lidarpoint_frontcamera.pose.position.y],
+                                                           [lidarpoint_frontcamera.pose.position.z]]))
+            lidarpixel_frontcamera_aux2 = np.array(
+                [[lidarpixel_frontcamera_aux1[0, 0] / lidarpixel_frontcamera_aux1[2, 0]],
+                 [lidarpixel_frontcamera_aux1[1, 0] / lidarpixel_frontcamera_aux1[2, 0]]])
+            if 0 < lidarpixel_frontcamera_aux2[0, 0] < self.front_width and 0 < lidarpixel_frontcamera_aux2[
+                1, 0] < self.front_height:
+                lidarpixel_frontcamera = np.array([[round(lidarpixel_frontcamera_aux2[0, 0])],
+                                                   [round(lidarpixel_frontcamera_aux2[1, 0])]])
                 self.lidarpixels_frontcamera.append(lidarpixel_frontcamera)
             transform_back = self.tf_buffer.lookup_transform(self.player + "/back_camera_rgb_optical_frame",
                                                              posestamped.header.frame_id,
                                                              posestamped.header.stamp,
                                                              rospy.Duration(1))
             lidarpoint_backcamera = tf2_geometry_msgs.do_transform_pose(posestamped, transform_back)
-            lidarpixel_backcamera_aux1 = np.dot(self.back_intrinsic, np.array([[lidarpoint_backcamera.pose.position.x], [lidarpoint_backcamera.pose.position.y], [lidarpoint_backcamera.pose.position.z]]))
-            lidarpixel_backcamera_aux2 = np.array([[lidarpixel_backcamera_aux1[0, 0]/lidarpixel_backcamera_aux1[2, 0]], [lidarpixel_backcamera_aux1[1, 0]/lidarpixel_backcamera_aux1[2, 0]]])
-            if 0 < lidarpixel_backcamera_aux2[0, 0] < self.back_width and 0 < lidarpixel_backcamera_aux2[1, 0] < self.back_height:
-                lidarpixel_backcamera = np.array([[round(lidarpixel_backcamera_aux2[0, 0])], [round(lidarpixel_backcamera_aux2[1, 0])]])
+            lidarpixel_backcamera_aux1 = np.dot(self.back_intrinsic,
+                                                np.array([[lidarpoint_backcamera.pose.position.x],
+                                                          [lidarpoint_backcamera.pose.position.y],
+                                                          [lidarpoint_backcamera.pose.position.z]]))
+            lidarpixel_backcamera_aux2 = np.array(
+                [[lidarpixel_backcamera_aux1[0, 0] / lidarpixel_backcamera_aux1[2, 0]],
+                 [lidarpixel_backcamera_aux1[1, 0] / lidarpixel_backcamera_aux1[2, 0]]])
+            if 0 < lidarpixel_backcamera_aux2[0, 0] < self.back_width and 0 < lidarpixel_backcamera_aux2[
+                1, 0] < self.back_height:
+                lidarpixel_backcamera = np.array([[round(lidarpixel_backcamera_aux2[0, 0])],
+                                                  [round(lidarpixel_backcamera_aux2[1, 0])]])
                 self.lidarpixels_backcamera.append(lidarpixel_backcamera)
         # Testing
-        print('back')
-        print(self.lidarpixels_backcamera)
-        print('front')
-        print(self.lidarpixels_frontcamera)
+        # print('back')
+        # print(self.lidarpixels_backcamera)
+        # print('front')
+        # print(self.lidarpixels_frontcamera)
         # TODO testar se bate com a imagem
+
+    def image_lidar(self):
+        for item in self.lidarpixels_frontcamera:
+            cv2.drawMarker(self.frontcameraimage, (item[0, 0], item[1, 0]), (0, 0, 255), markerType=cv2.MARKER_STAR,
+                           markerSize=40, thickness=2, line_type=cv2.LINE_AA)
+        for item in self.lidarpixels_backcamera:
+            cv2.drawMarker(self.backcameraimage, (item[0, 0], item[1, 0]), (0, 0, 255), markerType=cv2.MARKER_STAR,
+                           markerSize=40, thickness=2, line_type=cv2.LINE_AA)
+        cv2.imshow(self.player + ' frontal', self.frontcameraimage)
+        cv2.imshow(self.player + ' traseira', self.backcameraimage)
+        cv2.waitKey(1)
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
