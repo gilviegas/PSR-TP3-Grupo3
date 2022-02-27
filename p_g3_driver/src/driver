@@ -10,6 +10,7 @@ import cv2
 import message_filters
 import math
 import tf2_ros
+import copy
 
 
 class Driver:
@@ -17,11 +18,11 @@ class Driver:
         # ---------------------------------------------------
         #   Get team, hunter and prey
         # ---------------------------------------------------
-        self.team = None
-        self.hunter = None
-        self.prey = None
-        self.player = None
-        self.allplayers = None
+        self.team = ''
+        self.hunter = ''
+        self.prey = ''
+        self.player = ''
+        self.allplayers = ''
         self.team_identification()
         # ---------------------------------------------------
         #   Topics to subscribe and subscription
@@ -143,9 +144,19 @@ class Driver:
             point.y = y
             point.z = z
             posestamped.pose.position = point
-            self.lidar_points_to_pixels(posestamped, self.player + "/back_camera_rgb_optical_frame", self.back_intrinsic, self.lidarpixels_backcamera)
-            self.lidar_points_to_pixels(posestamped, self.player + "/camera_rgb_optical_frame", self.front_intrinsic, self.lidarpixels_frontcamera)
-        # TODO testar se bate com a imagem
+            posestamped_front = copy.deepcopy(posestamped)
+            posestamped_back = copy.deepcopy(posestamped)
+            if posestamped_front.pose.position.x < 0:
+                posestamped_front.pose.position.x = math.inf
+                posestamped_front.pose.position.y = math.inf
+            if posestamped_back.pose.position.x > 0:
+                posestamped_back.pose.position.x = math.inf
+                posestamped_back.pose.position.y = math.inf
+            print(posestamped_front.pose.position.x)
+            self.lidar_points_to_pixels(posestamped_back, self.player + "/back_camera_rgb_optical_frame",
+                                        self.back_intrinsic, self.lidarpixels_backcamera)
+            self.lidar_points_to_pixels(posestamped_front, self.player + "/camera_rgb_optical_frame", self.front_intrinsic,
+                                        self.lidarpixels_frontcamera)
 
     def lidar_points_to_pixels(self, posestamped, frame, intrinsic, output):
         transform = self.tf_buffer.lookup_transform(frame,
@@ -163,6 +174,7 @@ class Driver:
         if 0 < lidarpixel_camera_aux2[0, 0] < self.front_width and 0 < lidarpixel_camera_aux2[1, 0] < self.front_height:
             lidarpixel_camera = np.array([[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
             output.append(lidarpixel_camera)
+
     def image_lidar(self):
         for item in self.lidarpixels_frontcamera:
             cv2.drawMarker(self.frontcameraimage, (item[0, 0], item[1, 0]), (0, 0, 255), markerType=cv2.MARKER_STAR,
