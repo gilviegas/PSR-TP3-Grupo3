@@ -79,8 +79,6 @@ class Driver:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-
-
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
                            'green': rospy.get_param('/green_players'),
@@ -145,47 +143,26 @@ class Driver:
             point.y = y
             point.z = z
             posestamped.pose.position = point
-            transform_front = self.tf_buffer.lookup_transform(self.player + "/camera_rgb_optical_frame",
-                                                              posestamped.header.frame_id,
-                                                              posestamped.header.stamp,
-                                                              rospy.Duration(1))
-            lidarpoint_frontcamera = tf2_geometry_msgs.do_transform_pose(posestamped, transform_front)
-            lidarpixel_frontcamera_aux1 = np.dot(self.front_intrinsic,
-                                                 np.array([[lidarpoint_frontcamera.pose.position.x],
-                                                           [lidarpoint_frontcamera.pose.position.y],
-                                                           [lidarpoint_frontcamera.pose.position.z]]))
-            lidarpixel_frontcamera_aux2 = np.array(
-                [[lidarpixel_frontcamera_aux1[0, 0] / lidarpixel_frontcamera_aux1[2, 0]],
-                 [lidarpixel_frontcamera_aux1[1, 0] / lidarpixel_frontcamera_aux1[2, 0]]])
-            if 0 < lidarpixel_frontcamera_aux2[0, 0] < self.front_width and 0 < lidarpixel_frontcamera_aux2[
-                1, 0] < self.front_height:
-                lidarpixel_frontcamera = np.array([[round(lidarpixel_frontcamera_aux2[0, 0])],
-                                                   [round(lidarpixel_frontcamera_aux2[1, 0])]])
-                self.lidarpixels_frontcamera.append(lidarpixel_frontcamera)
-            transform_back = self.tf_buffer.lookup_transform(self.player + "/back_camera_rgb_optical_frame",
-                                                             posestamped.header.frame_id,
-                                                             posestamped.header.stamp,
-                                                             rospy.Duration(1))
-            lidarpoint_backcamera = tf2_geometry_msgs.do_transform_pose(posestamped, transform_back)
-            lidarpixel_backcamera_aux1 = np.dot(self.back_intrinsic,
-                                                np.array([[lidarpoint_backcamera.pose.position.x],
-                                                          [lidarpoint_backcamera.pose.position.y],
-                                                          [lidarpoint_backcamera.pose.position.z]]))
-            lidarpixel_backcamera_aux2 = np.array(
-                [[lidarpixel_backcamera_aux1[0, 0] / lidarpixel_backcamera_aux1[2, 0]],
-                 [lidarpixel_backcamera_aux1[1, 0] / lidarpixel_backcamera_aux1[2, 0]]])
-            if 0 < lidarpixel_backcamera_aux2[0, 0] < self.back_width and 0 < lidarpixel_backcamera_aux2[
-                1, 0] < self.back_height:
-                lidarpixel_backcamera = np.array([[round(lidarpixel_backcamera_aux2[0, 0])],
-                                                  [round(lidarpixel_backcamera_aux2[1, 0])]])
-                self.lidarpixels_backcamera.append(lidarpixel_backcamera)
-        # Testing
-        # print('back')
-        # print(self.lidarpixels_backcamera)
-        # print('front')
-        # print(self.lidarpixels_frontcamera)
+            self.lidar_points_to_pixels(posestamped, self.player + "/back_camera_rgb_optical_frame", self.back_intrinsic, self.lidarpixels_backcamera)
+            self.lidar_points_to_pixels(posestamped, self.player + "/camera_rgb_optical_frame", self.front_intrinsic, self.lidarpixels_frontcamera)
         # TODO testar se bate com a imagem
 
+    def lidar_points_to_pixels(self, posestamped, frame, intrinsic, output):
+        transform = self.tf_buffer.lookup_transform(frame,
+                                                    posestamped.header.frame_id,
+                                                    posestamped.header.stamp,
+                                                    rospy.Duration(1))
+        lidarpoint_camera = tf2_geometry_msgs.do_transform_pose(posestamped, transform)
+        lidarpixel_camera_aux1 = np.dot(intrinsic,
+                                        np.array([[lidarpoint_camera.pose.position.x],
+                                                  [lidarpoint_camera.pose.position.y],
+                                                  [lidarpoint_camera.pose.position.z]]))
+        lidarpixel_camera_aux2 = np.array(
+            [[lidarpixel_camera_aux1[0, 0] / lidarpixel_camera_aux1[2, 0]],
+             [lidarpixel_camera_aux1[1, 0] / lidarpixel_camera_aux1[2, 0]]])
+        if 0 < lidarpixel_camera_aux2[0, 0] < self.front_width and 0 < lidarpixel_camera_aux2[1, 0] < self.front_height:
+            lidarpixel_camera = np.array([[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
+            output.append(lidarpixel_camera)
     def image_lidar(self):
         for item in self.lidarpixels_frontcamera:
             cv2.drawMarker(self.frontcameraimage, (item[0, 0], item[1, 0]), (0, 0, 255), markerType=cv2.MARKER_STAR,
@@ -196,6 +173,7 @@ class Driver:
         cv2.imshow(self.player + ' frontal', self.frontcameraimage)
         cv2.imshow(self.player + ' traseira', self.backcameraimage)
         cv2.waitKey(1)
+
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
