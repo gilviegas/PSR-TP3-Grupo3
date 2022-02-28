@@ -4,7 +4,7 @@ import numpy as np
 import rospy
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
 from tf2_geometry_msgs import PoseStamped, tf2_geometry_msgs
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Twist ,Point
 from cv_bridge import CvBridge
 import cv2
 import message_filters
@@ -75,6 +75,24 @@ class Driver:
         self.lidarpixels_backcamera = []
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        # ---------------------------------------------------
+        #   Goal
+        # ---------------------------------------------------
+        self.goal = PoseStamped()
+        self.manual_goal_active = False
+        self.angle = 0
+        self.speed = 0
+        # ---------------------------------------------------
+        #   Publisher
+        # ---------------------------------------------------
+        self.publisher_command = rospy.Publisher('/' + self.player + '/cmd_vel', Twist, queue_size=1)
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
+
+        self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
+
+        self.goal_subscriber = rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goalReceivedCallback)
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -140,6 +158,13 @@ class Driver:
         self.back_height = msg_back.height
         self.back_width = msg_back.width
         self.back_intrinsic = np.asarray(msg_back.K).reshape(3, 3)
+
+    def goalReceivedCallback(self, msg):
+        # Verify if goal is in odom frame
+        print('Received new goal')
+        self.goal = copy.copy(msg)
+        self.manual_goal_active = True
+
 
     def getLidarPointsCallback(self, msg):
         z = 0
@@ -229,6 +254,37 @@ class Driver:
             else:
                 cX, cY = 0, 0
             centroid_data.append((cX, cY))
+
+
+    def goToGoal(self,minimum_speed=0.1,maximum_speed=2):
+        goal_copy = copy.deepcopy(self.goal)
+        goal_copy.header.stamp = rospy.Time.now()
+        print('Tranforming pose')
+        goal_in_base_lik = self.tf_buffer.transform(goal_copy, self.player + '/base_footprint', rospy.Duration(1))
+        print('Pose Transformed')
+
+        x=goal_in_base_lik.pose.position.x
+        y=goal_in_base_lik.pose.position.y
+
+        self.angle = math.atan2(y,x)
+        distance_to_goal=math.sqrt(x**2+y**2)
+
+        # limit minimun speed
+        self.speed=max(minimum_speed,0.5*distance_to_goal)
+        # limitmaximum speed
+        self.speed=min(maximum_speed,self.speed)
+
+
+    def sendCommandCallback(self, event):
+        print('sending twist command')
+
+        if self.manual_goal_active == True:
+            self.goToGoal()
+
+        twist = Twist()
+        twist.linear.x = self.speed
+        twist.angular.z = self.angle
+        self.publisher_command.publish(twist)
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
