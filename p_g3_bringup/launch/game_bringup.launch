@@ -59,14 +59,14 @@
         <arg name="player_name" value="green1"/>
     </include>
 
-<!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
-<!--        <arg name="player_name" value="green2"/>
-<!--        <arg name="player_color" value="Green"/>
+<!--&lt;!&ndash;    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
+<!--        <arg name="player_name" value="green2"/>-->
+<!--        <arg name="player_color" value="Green"/>-->
 <!--        <arg name="x_pos" value="2.0"/>-->
 <!--        <arg name="y_pos" value="1.0"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->
 <!--        <arg name="driver" value="false"/>-->
-<!--    </include>-->
+<!--    </include>&ndash;&gt;-->
 
 <!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
 <!--        <arg name="player_name" value="green2"/>-->
