@@ -4,10 +4,8 @@
 
     <!-- Red team-->
     <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        #set player name.
-        <arg name="player_name" value="red1"/>
-        #set player color
-        <arg name="player_color" value="Red"/>
+        <arg name="player_name" value="red1"/> # To set player name.
+        <arg name="player_color" value="Red"/> # To set player color.
         <arg name="x_pos" value="0.0"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
@@ -47,8 +45,8 @@
 
     <!-- Green team-->
     <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        <arg name="player_name" value="green1"/>    # To set player name.
-        <arg name="player_color" value="Green"/>    # To set player color.
+        <arg name="player_name" value="green1"/>
+        <arg name="player_color" value="Green"/>
         <arg name="x_pos" value="-1.5"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
@@ -62,8 +60,8 @@
     </include>
 
 <!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
-<!--        <arg name="player_name" value="green2"/>    # To set player name.-->
-<!--        <arg name="player_color" value="Green"/>    # To set player color.-->
+<!--        <arg name="player_name" value="green2"/>
+<!--        <arg name="player_color" value="Green"/>
 <!--        <arg name="x_pos" value="2.0"/>-->
 <!--        <arg name="y_pos" value="1.0"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->

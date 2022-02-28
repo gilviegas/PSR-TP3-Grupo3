@@ -276,7 +276,8 @@ class Driver:
 
 
     def sendCommandCallback(self, event):
-        print('sending twist command')
+
+        print('Sending twist command')
 
         if self.manual_goal_active == True:
             self.goToGoal()
