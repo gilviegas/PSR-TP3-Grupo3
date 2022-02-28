@@ -131,27 +131,8 @@ class Driver:
         self.Centroid(self.frontcameraimage, self.front_team_centroids, 'Team')
         self.Centroid(self.frontcameraimage, self.front_hunter_centroids, 'Hunter')
         self.Centroid(self.frontcameraimage, self.front_prey_centroids, 'Prey')
-        print('prey')
-        print(self.back_prey_centroids)
-        print('hunter')
-        print(self.back_hunter_centroids)
-        # self.back_team_centroids
-        # self.back_hunter_centroids
-        # self.back_prey_centroids
-        # self.front_team_centroids
-        # self.front_hunter_centroids
-        # self.front_prey_centroids
-        # self.image_lidar()
-        # print('back')
-        # print(self.lidarpixels_backcamera)
-        # print('front')
-        # print(self.lidarpixels_frontcamera)
 
         # TODO Meter parametro para escolher visualizar imagem ou não
-        # Testing
-        # cv2.imshow('frente', self.frontcameraimage)
-        # cv2.imshow('tras', self.backcameraimage)
-        # cv2.waitKey(1)
     def getCameraInfoCallback(self, msg_front, msg_back):
         self.front_height = msg_front.height
         self.front_width = msg_front.width
@@ -226,27 +207,6 @@ class Driver:
         if team == 'Prey':
             self.getCentroid(mask_prey, centroid_data)
 
-        # print(self.getCentroid(mask_team, 'Teammate', camera))
-        # print(self.getCentroid(mask_hunter, 'Hunter', camera))
-        # print(self.getCentroid(mask_prey, 'Prey', camera))
-        # self.getCentroid(mask_prey, 'Prey', camera, image)
-        # self.getCentroid(mask_prey, centroid_data)
-        # self.back_team_centroids
-        # self.back_hunter_centroids
-        # self.back_prey_centroids
-        # self.front_team_centroids
-        # self.front_hunter_centroids
-        # self.front_prey_centroids
-        # for i in self.getCentroid(mask_prey, 'Prey', camera, image):
-        #     cX = (i[2])[0]
-        #     cY = (i[2])[1]
-        #     # print(cX)
-        #     # print(cY)
-        #     cv2.circle(image, (cX, cY), 5, (255, 255, 255), -1)
-        #     cv2.putText(image, 'Prey', (cX - 25, cY - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        #     cv2.imshow(camera + ' camera detecting ->' + 'Prey', image)
-        #     cv2.waitKey(1)
-
     def getCentroid(self, mask, centroid_data):
         # Remove noise from mask
         maskcopy = mask.copy()
@@ -269,12 +229,6 @@ class Driver:
             else:
                 cX, cY = 0, 0
             centroid_data.append((cX, cY))
-            # # For testing
-            # cv2.circle(image, (cX, cY), 5, (255, 255, 255), -1)
-            # cv2.putText(image, team, (cX - 25, cY - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            # cv2.imshow(camera + ' camera detecting ->' + team, image)
-            # cv2.waitKey(1)
-    # def point_association(self):
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
