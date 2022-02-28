@@ -73,6 +73,10 @@ class Driver:
         self.lidarpoints_backcamera = []
         self.lidarpixels_frontcamera = []
         self.lidarpixels_backcamera = []
+        self.lidarpixelsbig_frontcamera = []
+        self.lidarpixelsbig_backcamera = []
+        self.lidarcoordbig_frontcamera = []
+        self.lidarcoordbig_backcamera = []
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
@@ -119,18 +123,27 @@ class Driver:
     def getCameraCallback(self, msg_front, msg_back):
         self.frontcameraimage = self.bridge.imgmsg_to_cv2(msg_front, "bgr8")
         self.backcameraimage = self.bridge.imgmsg_to_cv2(msg_back, "bgr8")
+        # Variables reset
         self.back_team_centroids = []
         self.back_hunter_centroids = []
         self.back_prey_centroids = []
         self.front_team_centroids = []
         self.front_hunter_centroids = []
         self.front_prey_centroids = []
+        # Get centroids
         self.Centroid(self.backcameraimage, self.back_team_centroids, 'Team')
         self.Centroid(self.backcameraimage, self.back_hunter_centroids, 'Hunter')
         self.Centroid(self.backcameraimage, self.back_prey_centroids, 'Prey')
         self.Centroid(self.frontcameraimage, self.front_team_centroids, 'Team')
         self.Centroid(self.frontcameraimage, self.front_hunter_centroids, 'Hunter')
         self.Centroid(self.frontcameraimage, self.front_prey_centroids, 'Prey')
+        print('funcao teste')
+        # print(self.lidarpixelsbig_backcamera)
+        print(self.centroid_to_lidar(self.back_prey_centroids, self.lidarpixels_backcamera,
+                                     self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera))
+        # print(self.centroid_to_lidar(self.back_team_centroids, self.lidarpixels_backcamera))
+        print('input')
+        print(self.back_prey_centroids)
 
         # TODO Meter parametro para escolher visualizar imagem ou não
     def getCameraInfoCallback(self, msg_front, msg_back):
@@ -155,6 +168,7 @@ class Driver:
             point.y = y
             point.z = z
             posestamped.pose.position = point
+            # Separate front and back points
             posestamped_front = copy.deepcopy(posestamped)
             posestamped_back = copy.deepcopy(posestamped)
             if posestamped_front.pose.position.x < 0:
@@ -163,17 +177,24 @@ class Driver:
             if posestamped_back.pose.position.x > 0:
                 posestamped_back.pose.position.x = math.inf
                 posestamped_back.pose.position.y = math.inf
+            self.lidarpoints_frontcamera.append((posestamped_front.pose.position.x, posestamped_front.pose.position.y))
+            self.lidarpoints_backcamera.append((posestamped_back.pose.position.x, posestamped_back.pose.position.y))
+            # Tranform lidar cordenates to pixels in camera frame
             self.lidar_points_to_pixels(posestamped_back, self.player + "/back_camera_rgb_optical_frame",
-                                        self.back_intrinsic, self.lidarpixels_backcamera)
+                                        self.back_intrinsic, self.lidarpixels_backcamera,
+                                        self.lidarpixelsbig_backcamera, self.lidarcoordbig_backcamera)
             self.lidar_points_to_pixels(posestamped_front, self.player + "/camera_rgb_optical_frame",
-                                        self.front_intrinsic, self.lidarpixels_frontcamera)
+                                        self.front_intrinsic, self.lidarpixels_frontcamera,
+                                        self.lidarpixelsbig_frontcamera, self.lidarcoordbig_frontcamera)
 
-    def lidar_points_to_pixels(self, posestamped, frame, intrinsic, output):
+    def lidar_points_to_pixels(self, posestamped, frame, intrinsic, output, output2, coord_output):
+        # Get the laser points in the camera frame
         transform = self.tf_buffer.lookup_transform(frame,
                                                     posestamped.header.frame_id,
                                                     posestamped.header.stamp,
                                                     rospy.Duration(1))
         lidarpoint_camera = tf2_geometry_msgs.do_transform_pose(posestamped, transform)
+        # Transform to pixels
         lidarpixel_camera_aux1 = np.dot(intrinsic,
                                         np.array([[lidarpoint_camera.pose.position.x],
                                                   [lidarpoint_camera.pose.position.y],
@@ -181,9 +202,19 @@ class Driver:
         lidarpixel_camera_aux2 = np.array(
             [[lidarpixel_camera_aux1[0, 0] / lidarpixel_camera_aux1[2, 0]],
              [lidarpixel_camera_aux1[1, 0] / lidarpixel_camera_aux1[2, 0]]])
+        # Get only the pixels that matter
         if 0 < lidarpixel_camera_aux2[0, 0] < self.front_width and 0 < lidarpixel_camera_aux2[1, 0] < self.front_height:
             lidarpixel_camera = np.array([[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
             output.append(lidarpixel_camera)
+        # Making sure that the coordenate matrix is the same for getting the pixels and the future reversing the process
+        coord_base_scan = (posestamped.pose.position.x, posestamped.pose.position.y, posestamped.pose.position.z)
+        # Get a pixel matrix of the same size of points matrix for reversing process
+        try:
+            lidarpixel_camera_aux3 = np.array([[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
+        except ValueError:
+            lidarpixel_camera_aux3 = np.array([[math.inf], [math.inf]])
+        output2.append(lidarpixel_camera_aux3)
+        coord_output.append(coord_base_scan)
 
     def image_lidar(self):
         for item in self.lidarpixels_frontcamera:
@@ -229,6 +260,44 @@ class Driver:
             else:
                 cX, cY = 0, 0
             centroid_data.append((cX, cY))
+
+    def centroid_to_lidar(self, centroid, lidar_pixels, lidar_coord, lidar_pixels_big):
+        # Transform list of arrays to list of points
+        lidar_pixels_big_list = []
+        for array in lidar_pixels_big:
+            lX = array[0, 0]
+            lY = array[1, 0]
+            lidar_pixels_big_list.append((lX, lY))
+        # Look for coordenates only if there is a robot in the images
+        if centroid != [] and lidar_pixels != []:
+            lidar_point = []
+            coord_list = []
+            # Get the closest laser pixels to the centroids
+            for i in centroid:
+                cX = i[0]
+                cY = i[1]
+                dist = math.inf
+                lidar = (math.inf, math.inf)
+                for idx in lidar_pixels:
+                    lX = idx[0, 0]
+                    lY = idx[1, 0]
+                    distance = math.sqrt((cX-lX)**2 + (cY-lY)**2)
+                    if distance < dist:
+                        dist = distance
+                        lidar = (lX, lY)
+                lidar_point.append(lidar)
+            # Get the index of the pixels from the previous step
+            idx_all = []
+            for point in lidar_point:
+                idx = lidar_pixels_big_list.index(point)
+                idx_all.append(idx)
+            # Get the coordenate in the base_link frame by comparation
+            for idx in idx_all:
+                coord = lidar_coord[idx]
+                coord_list.append(coord)
+        else:
+            coord_list = []
+        return coord_list
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
