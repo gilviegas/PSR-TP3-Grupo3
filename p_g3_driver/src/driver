@@ -113,7 +113,7 @@ class Driver:
     def getCameraCallback(self, msg_front, msg_back):
         self.frontcameraimage = self.bridge.imgmsg_to_cv2(msg_front, "bgr8")
         self.backcameraimage = self.bridge.imgmsg_to_cv2(msg_back, "bgr8")
-        self.mask(self.frontcameraimage, 'front')
+        # self.mask(self.frontcameraimage, 'front')
         self.mask(self.backcameraimage, 'back')
         # self.image_lidar()
         # print('back')
@@ -190,15 +190,40 @@ class Driver:
         cv2.imshow(self.player + ' traseira', self.backcameraimage)
         cv2.waitKey(1)
 
-    def mask(self, image, teste):
+    def mask(self, image, camera):
         mask_team = cv2.inRange(image, self.team_colors[0], self.team_colors[1])
         mask_hunter = cv2.inRange(image, self.hunter_colors[0], self.hunter_colors[1])
         mask_prey = cv2.inRange(image, self.prey_colors[0], self.prey_colors[1])
-        # test
-        cv2.imshow(teste + self.player + ' hunter', mask_hunter)
-        cv2.imshow(teste + self.player + ' prey', mask_prey)
-        cv2.waitKey(1)
+        # self.centroid(mask_hunter, 'Hunter', camera)
+        # self.centroid(mask_prey, 'Prey', camera)
 
+    def centroid(self, mask, team, camera):
+        # Remove noise from mask
+        cnts_aux1, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        for c in cnts_aux1:
+            area = cv2.contourArea(c)
+            if area > 25:
+                cv2.drawContours(mask, c, -1, (255, 255, 255), 25)
+                # cv2.drawContours(mask, c, -1, (0, 0, 0), 10)
+        mask2 = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8), iterations=2)
+        mask3 = cv2.dilate(mask2, np.ones((6, 6), np.uint8), iterations=2)
+        # Get new contours
+        contours, _ = cv2.findContours(mask3, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        for c in contours:
+            # calculate moments for each contour
+            M = cv2.moments(c)
+            # calculate x,y coordinate of center
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+            else:
+                cX, cY = 0, 0
+            return cX, cY
+            # For testing
+            # cv2.circle(image, (cX, cY), 5, (255, 255, 255), -1)
+            # cv2.putText(image, team, (cX - 25, cY - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            # cv2.imshow(camera + ' camera detecting ->' + team, imagecopy)
+            # cv2.waitKey(1)
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
