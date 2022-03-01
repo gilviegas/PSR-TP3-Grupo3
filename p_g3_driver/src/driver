@@ -4,13 +4,14 @@ import numpy as np
 import rospy
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
 from tf2_geometry_msgs import PoseStamped, tf2_geometry_msgs
-from geometry_msgs.msg import Twist ,Point
+from geometry_msgs.msg import Twist, Point
 from cv_bridge import CvBridge
 import cv2
 import message_filters
 import math
 import tf2_ros
 import copy
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 class Driver:
@@ -80,6 +81,15 @@ class Driver:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         # ---------------------------------------------------
+        #   Coordenates
+        # ---------------------------------------------------
+        self.coord_team_front = []
+        self.coord_prey_front = []
+        self.coord_hunter_front = []
+        self.coord_team_back = []
+        self.coord_prey_back = []
+        self.coord_hunter_back = []
+        # ---------------------------------------------------
         #   Goal
         # ---------------------------------------------------
         self.goal = PoseStamped()
@@ -89,6 +99,8 @@ class Driver:
         # ---------------------------------------------------
         #   Publisher
         # ---------------------------------------------------
+        topic_marker = "/" + self.player + '/marker'
+        self.publisher_marker = rospy.Publisher(topic_marker, MarkerArray, queue_size=1)
         self.publisher_command = rospy.Publisher('/' + self.player + '/cmd_vel', Twist, queue_size=1)
 
         self.tf_buffer = tf2_ros.Buffer()
@@ -155,15 +167,18 @@ class Driver:
         self.Centroid(self.frontcameraimage, self.front_team_centroids, 'Team')
         self.Centroid(self.frontcameraimage, self.front_hunter_centroids, 'Hunter')
         self.Centroid(self.frontcameraimage, self.front_prey_centroids, 'Prey')
-        print('funcao teste')
-        # print(self.lidarpixelsbig_backcamera)
-        print(self.centroid_to_lidar(self.back_prey_centroids, self.lidarpixels_backcamera,
-                                     self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera))
-        # print(self.centroid_to_lidar(self.back_team_centroids, self.lidarpixels_backcamera))
-        print('input')
-        print(self.back_prey_centroids)
+        self.createMarkersCallBack()
+        print(self.coord_prey_back)
+        # print('funcao teste')
+        # # print(self.lidarpixelsbig_backcamera)
+        # print(self.centroid_to_lidar(self.back_prey_centroids, self.lidarpixels_backcamera,
+        #                              self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera))
+        # # print(self.centroid_to_lidar(self.back_team_centroids, self.lidarpixels_backcamera))
+        # print('input')
+        # print(self.back_prey_centroids)
 
         # TODO Meter parametro para escolher visualizar imagem ou não
+
     def getCameraInfoCallback(self, msg_front, msg_back):
         self.front_height = msg_front.height
         self.front_width = msg_front.width
@@ -177,7 +192,6 @@ class Driver:
         print('Received new goal')
         self.goal = copy.copy(msg)
         self.manual_goal_active = True
-
 
     def getLidarPointsCallback(self, msg):
         z = 0
@@ -239,7 +253,8 @@ class Driver:
 
         # Get a pixel matrix of the same size of points matrix for reversing process
         try:
-            lidarpixel_camera_aux3 = np.array([[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
+            lidarpixel_camera_aux3 = np.array(
+                [[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
         except ValueError:
             lidarpixel_camera_aux3 = np.array([[math.inf], [math.inf]])
 
@@ -290,6 +305,7 @@ class Driver:
             else:
                 cX, cY = 0, 0
             centroid_data.append((cX, cY))
+
     def centroid_to_lidar(self, centroid, lidar_pixels, lidar_coord, lidar_pixels_big):
         # Transform list of arrays to list of points
         lidar_pixels_big_list = []
@@ -310,7 +326,7 @@ class Driver:
                 for idx in lidar_pixels:
                     lX = idx[0, 0]
                     lY = idx[1, 0]
-                    distance = math.sqrt((cX-lX)**2 + (cY-lY)**2)
+                    distance = math.sqrt((cX - lX) ** 2 + (cY - lY) ** 2)
                     if distance < dist:
                         dist = distance
                         lidar = (lX, lY)
@@ -328,24 +344,73 @@ class Driver:
             coord_list = []
         return coord_list
 
-    def goToGoal(self,minimum_speed=0.1,maximum_speed=2):
+    def players_coordenates(self):
+        self.coord_team_front = self.centroid_to_lidar(self.front_team_centroids, self.lidarpixels_frontcamera,
+                                                  self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
+        self.coord_prey_front = self.centroid_to_lidar(self.front_prey_centroids, self.lidarpixels_frontcamera,
+                                                  self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
+        self.coord_hunter_front = self.centroid_to_lidar(self.front_hunter_centroids, self.lidarpixels_frontcamera,
+                                                    self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
+        self.coord_team_back = self.centroid_to_lidar(self.back_team_centroids, self.lidarpixels_backcamera,
+                                                 self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
+        self.coord_prey_back = self.centroid_to_lidar(self.back_prey_centroids, self.lidarpixels_backcamera,
+                                                 self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
+        self.coord_hunter_back = self.centroid_to_lidar(self.back_hunter_centroids, self.lidarpixels_backcamera,
+                                                   self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
+
+    def marker_generate(self, coordenates, team):
+        marker = Marker()
+        marker_array = MarkerArray()
+        if team == 'blue':
+            color = (1, 0, 0)
+        elif team == 'green':
+            color = (0, 1, 0)
+        elif team == 'red':
+            color = (0, 0, 1)
+        else:
+            color = (1, 0, 1)
+        if coordenates != []:
+            ident = 1
+            for coord in coordenates:
+                marker.pose.position.x, marker.pose.position.y, marker.pose.position.z = coord
+                marker.pose.orientation.w = 1
+                marker.type = marker.CYLINDER
+                marker.id = ident
+                marker.header.frame_id = self.player + '/base_link'
+                marker.color.b, marker.color.g, marker.color.r = color
+                marker.color.a = 0.4
+                marker.scale.x = marker.scale.y = marker.scale.z = 0.3
+                marker.action = marker.ADD
+                ident += 1
+                marker_array.markers.append(marker)
+                self.publisher_marker.publish(marker_array)
+
+    def createMarkersCallBack(self):
+        self.players_coordenates()
+        self.marker_generate(self.coord_team_front, self.team)
+        self.marker_generate(self.coord_prey_front, self.prey)
+        self.marker_generate(self.coord_hunter_front, self.hunter)
+        self.marker_generate(self.coord_team_back, self.team)
+        self.marker_generate(self.coord_prey_back, self.prey)
+        self.marker_generate(self.coord_hunter_back, self.hunter)
+
+    def goToGoal(self, minimum_speed=0.1, maximum_speed=2):
         goal_copy = copy.deepcopy(self.goal)
         goal_copy.header.stamp = rospy.Time.now()
         print('Tranforming pose')
         goal_in_base_lik = self.tf_buffer.transform(goal_copy, self.player + '/base_footprint', rospy.Duration(1))
         print('Pose Transformed')
 
-        x=goal_in_base_lik.pose.position.x
-        y=goal_in_base_lik.pose.position.y
+        x = goal_in_base_lik.pose.position.x
+        y = goal_in_base_lik.pose.position.y
 
-        self.angle = math.atan2(y,x)
-        distance_to_goal=math.sqrt(x**2+y**2)
+        self.angle = math.atan2(y, x)
+        distance_to_goal = math.sqrt(x ** 2 + y ** 2)
 
         # limit minimun speed
-        self.speed=max(minimum_speed,0.5*distance_to_goal)
+        self.speed = max(minimum_speed, 0.5 * distance_to_goal)
         # limitmaximum speed
-        self.speed=min(maximum_speed,self.speed)
-
+        self.speed = min(maximum_speed, self.speed)
 
     def sendCommandCallback(self, event):
 
