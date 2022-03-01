@@ -36,19 +36,26 @@ class Driver:
         topic_camera_info = "/" + self.player + '/camera/rgb/camera_info'
         topic_backcamera_info = "/" + self.player + '/back_camera/rgb/camera_info'
         topic_laser = "/" + self.player + '/scan'
-        self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLidarPointsCallback)
+        # FIXME Não necessita estar no Namespace?
+        topic_goal = '/move_base_simple/goal'
+        # FIXME
+        # self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLidarPointsCallback)
+        self.subscriber_laser = message_filters.Subscriber(topic_laser, LaserScan)
         self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
         self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
         self.subscriber_camera_info = message_filters.Subscriber(topic_camera_info, CameraInfo)
         self.subscriber_backcamera_info = message_filters.Subscriber(topic_backcamera_info, CameraInfo)
+        # FIXME Adicionei isto para testar
+        # self.goal_subscriber = message_filters.Subscriber(topic_goal, PoseStamped)
         # ---------------------------------------------------
         #   Get image from the cameras
         # ---------------------------------------------------
         self.bridge = CvBridge()
         self.backcameraimage = None
         self.frontcameraimage = None
-        ts_image = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1)
-        ts_image.registerCallback(self.getCameraCallback)
+        # FIXME
+        # ts_image = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1)
+        # ts_image.registerCallback(self.getCameraCallback)
         self.back_team_centroids = []
         self.back_hunter_centroids = []
         self.back_prey_centroids = []
@@ -64,9 +71,10 @@ class Driver:
         self.back_intrinsic = None
         self.back_width = None
         self.back_height = None
-        ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info,
-                                                         self.subscriber_backcamera_info], 1)
-        ts_imageinfo.registerCallback(self.getCameraInfoCallback)
+        # FIXME
+        # ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info,
+        #                                                  self.subscriber_backcamera_info], 1)
+        # ts_imageinfo.registerCallback(self.getCameraInfoCallback)
         # ---------------------------------------------------
         #   Laser points
         # ---------------------------------------------------
@@ -107,7 +115,11 @@ class Driver:
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
-
+        # FIXME
+        ts = message_filters.TimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info,
+                                               self.subscriber_camera, self.subscriber_backcamera,
+                                               self.subscriber_laser], 1)
+        ts.registerCallback(self.subscribersCallback)
         self.goal_subscriber = rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goalReceivedCallback)
 
     def team_identification(self):
@@ -150,6 +162,12 @@ class Driver:
             self.hunter = 'No one'
             self.prey = 'No one'
 
+    def subscribersCallback(self, imageInfo_front, imageInfo_back, image_front, image_back, lidar):
+        self.getCameraInfoCallback(imageInfo_front, imageInfo_back)
+        self.getCameraCallback(image_front, image_back)
+        self.getLidarPointsCallback(lidar)
+        # self.goalReceivedCallback(goal)
+
     def getCameraCallback(self, msg_front, msg_back):
         self.frontcameraimage = self.bridge.imgmsg_to_cv2(msg_front, "bgr8")
         self.backcameraimage = self.bridge.imgmsg_to_cv2(msg_back, "bgr8")
@@ -168,7 +186,7 @@ class Driver:
         self.Centroid(self.frontcameraimage, self.front_hunter_centroids, 'Hunter')
         self.Centroid(self.frontcameraimage, self.front_prey_centroids, 'Prey')
         self.createMarkersCallBack()
-        print(self.coord_prey_back)
+        # print(self.coord_prey_back)
         # print('funcao teste')
         # # print(self.lidarpixelsbig_backcamera)
         # print(self.centroid_to_lidar(self.back_prey_centroids, self.lidarpixels_backcamera,
@@ -363,14 +381,17 @@ class Driver:
         marker_array = MarkerArray()
         if team == 'blue':
             color = (1, 0, 0)
+            ident = 10
         elif team == 'green':
             color = (0, 1, 0)
+            ident = 20
         elif team == 'red':
             color = (0, 0, 1)
+            ident = 30
         else:
             color = (1, 0, 1)
-        if coordenates != []:
             ident = 1
+        if coordenates != []:
             for coord in coordenates:
                 marker.pose.position.x, marker.pose.position.y, marker.pose.position.z = coord
                 marker.pose.orientation.w = 1
