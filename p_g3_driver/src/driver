@@ -531,7 +531,11 @@ class Driver:
         self.speed = max(minimum_speed, 0.2 * distance_to_goal)
         # limitmaximum speed
         self.speed = min(maximum_speed, self.speed)
-        self.angle = math.atan2(y, x)
+
+        if distance_to_goal < 0.05:
+            self.manual_goal_active = False
+            self.angle = 0
+            self.speed = 0
 
     def sendCommandCallback(self, event):
         self.strategy()
@@ -545,7 +549,6 @@ class Driver:
         twist.angular.z = self.angle
         self.publisher_command.publish(twist)
 
-    # exemplo
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
