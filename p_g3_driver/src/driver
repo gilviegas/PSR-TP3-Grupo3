@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import random
+
 import numpy as np
 import rospy
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
@@ -11,6 +13,7 @@ import math
 import tf2_ros
 import copy
 from visualization_msgs.msg import Marker, MarkerArray
+import random
 
 
 class Driver:
@@ -28,7 +31,7 @@ class Driver:
         self.allplayers = ''
         self.team_identification()
         # ---------------------------------------------------
-        #   Topics to subscribe and subscription
+        #   Topics to subscribe
         # ---------------------------------------------------
         topic_camera = "/" + self.player + '/camera/rgb/image_raw'
         topic_backcamera = "/" + self.player + '/back_camera/rgb/image_raw'
@@ -37,24 +40,17 @@ class Driver:
         topic_laser = "/" + self.player + '/scan'
         # FIXME Não necessita estar no Namespace?
         topic_goal = '/move_base_simple/goal'
-        # FIXME
-        # self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLidarPointsCallback)
         self.subscriber_laser = message_filters.Subscriber(topic_laser, LaserScan)
         self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
         self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
         self.subscriber_camera_info = message_filters.Subscriber(topic_camera_info, CameraInfo)
         self.subscriber_backcamera_info = message_filters.Subscriber(topic_backcamera_info, CameraInfo)
-        # FIXME Adicionei isto para testar
-        # self.goal_subscriber = message_filters.Subscriber(topic_goal, PoseStamped)
         # ---------------------------------------------------
         #   Get image from the cameras
         # ---------------------------------------------------
         self.bridge = CvBridge()
         self.backcameraimage = None
         self.frontcameraimage = None
-        # FIXME
-        # ts_image = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1)
-        # ts_image.registerCallback(self.getCameraCallback)
         self.back_team_centroids = []
         self.back_hunter_centroids = []
         self.back_prey_centroids = []
@@ -70,10 +66,6 @@ class Driver:
         self.back_intrinsic = None
         self.back_width = None
         self.back_height = None
-        # FIXME
-        # ts_imageinfo = message_filters.TimeSynchronizer([self.subscriber_camera_info,
-        #                                                  self.subscriber_backcamera_info], 1)
-        # ts_imageinfo.registerCallback(self.getCameraInfoCallback)
         # ---------------------------------------------------
         #   Laser points
         # ---------------------------------------------------
@@ -107,22 +99,23 @@ class Driver:
         self.angle = 0
         self.speed = 0
         # ---------------------------------------------------
-        #   Publisher
+        #   Subscription and funtion calling
         # ---------------------------------------------------
-        topic_marker = "/" + self.player + '/marker'
-        self.publisher_marker = rospy.Publisher(topic_marker, MarkerArray, queue_size=1)
-        self.publisher_command = rospy.Publisher('/' + self.player + '/cmd_vel', Twist, queue_size=1)
-
         self.tf_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
-
-        self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
-        # FIXME
         ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info,
                                                           self.subscriber_camera, self.subscriber_backcamera,
                                                           self.subscriber_laser], 1, 1)
         ts.registerCallback(self.subscribersCallback)
-        self.goal_subscriber = rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goalReceivedCallback)
+        self.goal_subscriber = rospy.Subscriber(topic_goal, PoseStamped, self.goalReceivedCallback)
+        # ---------------------------------------------------
+        #   Topics to publish
+        # ---------------------------------------------------
+        topic_marker = "/" + self.player + '/marker'
+        topic_motion = '/' + self.player + '/cmd_vel'
+        self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
+        self.publisher_marker = rospy.Publisher(topic_marker, MarkerArray, queue_size=1)
+        self.publisher_command = rospy.Publisher(topic_motion, Twist, queue_size=1)
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -212,6 +205,7 @@ class Driver:
         # print('Received new goal')
         self.goal = copy.copy(msg)
         self.manual_goal_active = True
+
 
     def getLidarPointsCallback(self, msg):
         z = 0
@@ -424,8 +418,8 @@ class Driver:
         self.players_coordenates()
         all_coord_players = self.coord_team_front + self.coord_prey_front + self.coord_hunter_front + self.coord_team_back + self.coord_prey_back + self.coord_hunter_back
         all_coord_laser = self.lidarcoordbig_backcamera + self.lidarcoordbig_frontcamera
-        range = 1
-        max = 3.5
+        range = 0.75
+        max = 2
         coord_avoid = []
         for coord_laser in all_coord_laser:
             if max > coord_laser[0] > -max and coord_laser[1] < max and coord_laser[1] > -max:
@@ -480,12 +474,21 @@ class Driver:
                 if dist < dist_obstacle:
                     dist_obstacle = dist
         # Closer object
-        if dist_obstacle > dist_prey and dist_obstacle > dist_hunter:
+        if dist_obstacle < dist_prey and dist_obstacle < dist_hunter:
             self.closerobstacle = True
-        elif dist_prey > dist_hunter and dist_prey > dist_obstacle:
+            print('prey ' + str(dist_prey))
+            print('hunter ' + str(dist_hunter))
+            print('wall ' + str(dist_obstacle))
+        elif dist_prey < dist_hunter and dist_prey < dist_obstacle:
             self.closerprey = True
-        elif dist_hunter > dist_prey and dist_hunter > dist_obstacle:
+            print('prey ' + str(dist_prey))
+            print('hunter ' + str(dist_hunter))
+            print('wall ' + str(dist_obstacle))
+        elif dist_hunter < dist_prey and dist_hunter < dist_obstacle:
             self.closerhunter = True
+            print('prey ' + str(dist_prey))
+            print('hunter ' + str(dist_hunter))
+            print('wall ' + str(dist_obstacle))
 
     def strategy(self):
         if not self.manual_goal_active:
@@ -499,43 +502,44 @@ class Driver:
             else:
                 self.wandering()
         else:
-            self.goToGoal()
+            self.goToGoal(0.1, 1.5, self.goal, 'manual')
+            print('working')
             # TODO Meter aqui a função correspondente
 
     def avoid_obstacle(self):
-        pass
+        print('avoiding obstacle')
 
     def runaway(self):
-        pass
+        print('running away')
 
     def hunting(self):
-        pass
+        print('hunting')
 
     def wandering(self):
-        pass
+        # velocity = random.randint(0, 1.5)
+        # coord = (random.randint(-2, 2), random.randint(-2, 2))
+        # self.goToGoal(1, 1.5, coord, 'wandering')
+        print('wandering')
 
-    def goToGoal(self, minimum_speed=0.1, maximum_speed=2):
-        goal_copy = copy.deepcopy(self.goal)
+    def goToGoal(self, minimum_speed, maximum_speed, goal, mode):
+        # Get the goal
+        goal_copy = copy.deepcopy(goal)
         goal_copy.header.stamp = rospy.Time.now()
-        # print('Tranforming pose')
+        # Tranform to base_footprint frame
         goal_in_base_lik = self.tf_buffer.transform(goal_copy, self.player + '/base_footprint', rospy.Duration(1))
-        # print('Pose Transformed')
-
         x = goal_in_base_lik.pose.position.x
         y = goal_in_base_lik.pose.position.y
-
         self.angle = math.atan2(y, x)
         distance_to_goal = math.sqrt(x ** 2 + y ** 2)
-
-        # limit minimun speed
+        # Limit minimun speed
         self.speed = max(minimum_speed, 0.2 * distance_to_goal)
-        # limitmaximum speed
+        # Limit maximum speed
         self.speed = min(maximum_speed, self.speed)
-
         if distance_to_goal < 0.05:
-            self.manual_goal_active = False
             self.angle = 0
             self.speed = 0
+            if mode == 'manual':
+                self.manual_goal_active = False
 
     def sendCommandCallback(self, event):
         self.strategy()
