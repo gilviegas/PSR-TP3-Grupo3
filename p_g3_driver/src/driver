@@ -545,6 +545,7 @@ class Driver:
         twist.angular.z = self.angle
         self.publisher_command.publish(twist)
 
+    # exemplo
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
