@@ -499,7 +499,7 @@ class Driver:
             else:
                 self.wandering()
         else:
-            pass
+            self.goToGoal()
             # TODO Meter aqui a função correspondente
 
     def avoid_obstacle(self):
@@ -534,11 +534,11 @@ class Driver:
         self.angle = math.atan2(y, x)
 
     def sendCommandCallback(self, event):
-
+        self.strategy()
         # print('Sending twist command')
-
-        if self.manual_goal_activeself.manual_goal_active == True:
-            self.goToGoal()
+        #
+        # if self.manual_goal_activeself.manual_goal_active == True:
+        #     self.goToGoal()
 
         twist = Twist()
         twist.linear.x = self.speed
