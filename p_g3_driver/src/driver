@@ -116,9 +116,9 @@ class Driver:
 
         self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
         # FIXME
-        ts = message_filters.TimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info,
+        ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info,
                                                self.subscriber_camera, self.subscriber_backcamera,
-                                               self.subscriber_laser], 1)
+                                               self.subscriber_laser], 1, 1)
         ts.registerCallback(self.subscribersCallback)
         self.goal_subscriber = rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goalReceivedCallback)
 
