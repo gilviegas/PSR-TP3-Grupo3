@@ -484,18 +484,34 @@ class Driver:
             self.closerobstacle = True
         elif dist_prey > dist_hunter and dist_prey > dist_obstacle:
             self.closerprey = True
-        else:
+        elif dist_hunter > dist_prey and dist_hunter > dist_obstacle:
             self.closerhunter = True
 
-    # def strategy(self):
-    #     if self.manual_goal_active == False
-    #     if self.obstacle:
-    #         self.avoid_obstacle()
-    #     else:
-    #         if self.
-
+    def strategy(self):
+        if not self.manual_goal_active:
+            self.find_closer_object()
+            if self.closerobstacle:
+                self.avoid_obstacle()
+            elif self.closerhunter:
+                self.runaway()
+            elif self.closerprey:
+                self.hunting()
+            else:
+                self.wandering()
+        else:
+            pass
+            # TODO Meter aqui a função correspondente
 
     def avoid_obstacle(self):
+        pass
+
+    def runaway(self):
+        pass
+
+    def hunting(self):
+        pass
+
+    def wandering(self):
         pass
 
     def goToGoal(self, minimum_speed=0.1, maximum_speed=2):
@@ -521,7 +537,7 @@ class Driver:
 
         # print('Sending twist command')
 
-        if self.manual_goal_active == True:
+        if self.manual_goal_activeself.manual_goal_active == True:
             self.goToGoal()
 
         twist = Twist()
