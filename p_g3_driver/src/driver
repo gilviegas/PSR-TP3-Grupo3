@@ -117,8 +117,8 @@ class Driver:
         self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
         # FIXME
         ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info,
-                                               self.subscriber_camera, self.subscriber_backcamera,
-                                               self.subscriber_laser], 1, 1)
+                                                          self.subscriber_camera, self.subscriber_backcamera,
+                                                          self.subscriber_laser], 1, 1)
         ts.registerCallback(self.subscribersCallback)
         self.goal_subscriber = rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.goalReceivedCallback)
 
@@ -364,17 +364,18 @@ class Driver:
 
     def players_coordenates(self):
         self.coord_team_front = self.centroid_to_lidar(self.front_team_centroids, self.lidarpixels_frontcamera,
-                                                  self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
+                                                       self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
         self.coord_prey_front = self.centroid_to_lidar(self.front_prey_centroids, self.lidarpixels_frontcamera,
-                                                  self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
+                                                       self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
         self.coord_hunter_front = self.centroid_to_lidar(self.front_hunter_centroids, self.lidarpixels_frontcamera,
-                                                    self.lidarcoordbig_frontcamera, self.lidarpixelsbig_frontcamera)
+                                                         self.lidarcoordbig_frontcamera,
+                                                         self.lidarpixelsbig_frontcamera)
         self.coord_team_back = self.centroid_to_lidar(self.back_team_centroids, self.lidarpixels_backcamera,
-                                                 self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
+                                                      self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
         self.coord_prey_back = self.centroid_to_lidar(self.back_prey_centroids, self.lidarpixels_backcamera,
-                                                 self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
+                                                      self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
         self.coord_hunter_back = self.centroid_to_lidar(self.back_hunter_centroids, self.lidarpixels_backcamera,
-                                                   self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
+                                                        self.lidarcoordbig_backcamera, self.lidarpixelsbig_backcamera)
 
     def marker_generate(self, coordenates, team, camera):
         marker = Marker()
@@ -387,7 +388,7 @@ class Driver:
         elif team == 'red':
             color = (0, 0, 1)
         else:
-            color = (1, 0, 1)
+            color = (1, 1, 0)
         ident = 1
         if coordenates != []:
             for coord in coordenates:
@@ -404,7 +405,8 @@ class Driver:
                 marker_array.markers.append(marker)
                 self.publisher_marker.publish(marker_array)
         # else:
-            # TODO Encontrar forma de apagar markers do namespace
+        # TODO Encontrar forma de apagar markers do namespace
+
     def createMarkersCallBack(self):
         self.players_coordenates()
         self.marker_generate(self.coord_team_front, self.team, 'front_camera')
@@ -413,6 +415,28 @@ class Driver:
         self.marker_generate(self.coord_team_back, self.team, 'back_camera')
         self.marker_generate(self.coord_prey_back, self.prey, 'back_camera')
         self.marker_generate(self.coord_hunter_back, self.hunter, 'back_camera')
+        print(self.obstaclefinder())
+        self.marker_generate(self.obstaclefinder(), 'obstacle', 'lidar')
+
+    def obstaclefinder(self):
+        self.players_coordenates()
+        all_coord_players = self.coord_team_front + self.coord_prey_front + self.coord_hunter_front + self.coord_team_back + self.coord_prey_back + self.coord_hunter_back
+        all_coord_laser = self.lidarcoordbig_backcamera + self.lidarcoordbig_frontcamera
+        range = 1
+        max = 3.5
+        coord_avoid = []
+        for coord_laser in all_coord_laser:
+            if max > coord_laser[0] > -max and coord_laser[1] < max and coord_laser[1] > -max:
+                if all_coord_players != []:
+                    for i in all_coord_players:
+                        if (coord_laser[0] < (i[0] - range) or coord_laser[0] > (i[0] + range)) and (coord_laser[1] < (i[1] - range) or coord_laser[1] > (i[1] + range)):
+                            coord_aux = (round(coord_laser[0], 2), round(coord_laser[1], 2), 0)
+                            coord_avoid.append(coord_aux)
+                else:
+                    coord_aux = (round(coord_laser[0], 2), round(coord_laser[1], 2), 0)
+                    coord_avoid.append(coord_aux)
+        coord_avoid = list(dict.fromkeys(coord_avoid))
+        return coord_avoid
 
     def goToGoal(self, minimum_speed=0.1, maximum_speed=2):
         goal_copy = copy.deepcopy(self.goal)
@@ -443,6 +467,7 @@ class Driver:
         twist.linear.x = self.speed
         twist.angular.z = self.angle
         self.publisher_command.publish(twist)
+
 
 def main():
     rospy.init_node('p_g3_driver', anonymous=False)
