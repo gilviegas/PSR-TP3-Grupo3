@@ -512,9 +512,10 @@ class Driver:
         distance_to_goal = math.sqrt(x ** 2 + y ** 2)
 
         # limit minimun speed
-        self.speed = max(minimum_speed, 0.5 * distance_to_goal)
+        self.speed = max(minimum_speed, 0.2 * distance_to_goal)
         # limitmaximum speed
         self.speed = min(maximum_speed, self.speed)
+        self.angle = math.atan2(y, x)
 
     def sendCommandCallback(self, event):
 
