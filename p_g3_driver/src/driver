@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import numpy as np
 import rospy
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
@@ -97,6 +96,9 @@ class Driver:
         self.coord_team_back = []
         self.coord_prey_back = []
         self.coord_hunter_back = []
+        self.closerobstacle = False
+        self.closerprey = False
+        self.closerhunter = False
         # ---------------------------------------------------
         #   Goal
         # ---------------------------------------------------
@@ -409,14 +411,14 @@ class Driver:
 
     def createMarkersCallBack(self):
         self.players_coordenates()
+        self.obstaclefinder()
         self.marker_generate(self.coord_team_front, self.team, 'front_camera')
         self.marker_generate(self.coord_prey_front, self.prey, 'front_camera')
         self.marker_generate(self.coord_hunter_front, self.hunter, 'front_camera')
         self.marker_generate(self.coord_team_back, self.team, 'back_camera')
         self.marker_generate(self.coord_prey_back, self.prey, 'back_camera')
         self.marker_generate(self.coord_hunter_back, self.hunter, 'back_camera')
-        print(self.obstaclefinder())
-        self.marker_generate(self.obstaclefinder(), 'obstacle', 'lidar')
+        self.marker_generate(self.coord_obstacle, 'obstacle', 'lidar')
 
     def obstaclefinder(self):
         self.players_coordenates()
@@ -433,10 +435,68 @@ class Driver:
                             coord_aux = (round(coord_laser[0], 2), round(coord_laser[1], 2), 0)
                             coord_avoid.append(coord_aux)
                 else:
-                    coord_aux = (round(coord_laser[0], 2), round(coord_laser[1], 2), 0)
+                    coord_aux = (round(coord_laser[0], 1), round(coord_laser[1], 1), 0)
                     coord_avoid.append(coord_aux)
-        coord_avoid = list(dict.fromkeys(coord_avoid))
-        return coord_avoid
+        self.coord_obstacle = list(dict.fromkeys(coord_avoid))
+
+    def find_closer_object(self):
+        # Get coordenates
+        self.players_coordenates()
+        self.obstaclefinder()
+        # Reset all variables
+        self.closerobstacle = False
+        self.closerhunter = False
+        self.closerprey = False
+        dist_prey = math.inf
+        dist_hunter = math.inf
+        dist_obstacle = math.inf
+        # Calculate distances
+        # Prey
+        if self.coord_prey_front != []:
+            for coord in self.coord_prey_front:
+                dist = math.sqrt(coord[0]**2 + coord[1]**2)
+                if dist < dist_prey:
+                    dist_prey = dist
+        if self.coord_prey_back != []:
+            for coord in self.coord_prey_back:
+                dist = math.sqrt(coord[0]**2 + coord[1]**2)
+                if dist < dist_prey:
+                    dist_prey = dist
+        # Hunter
+        if self.coord_hunter_front != []:
+            for coord in self.coord_hunter_front:
+                dist = math.sqrt(coord[0]**2 + coord[1]**2)
+                if dist < dist_hunter:
+                    dist_hunter = dist
+        if self.coord_hunter_back != []:
+            for coord in self.coord_hunter_back:
+                dist = math.sqrt(coord[0]**2 + coord[1]**2)
+                if dist < dist_hunter:
+                    dist_hunter = dist
+        # Obstacle
+        if self.coord_obstacle != []:
+            for coord in self.coord_obstacle:
+                dist = math.sqrt(coord[0]**2 + coord[1]**2)
+                if dist < dist_obstacle:
+                    dist_obstacle = dist
+        # Closer object
+        if dist_obstacle > dist_prey and dist_obstacle > dist_hunter:
+            self.closerobstacle = True
+        elif dist_prey > dist_hunter and dist_prey > dist_obstacle:
+            self.closerprey = True
+        else:
+            self.closerhunter = True
+
+    # def strategy(self):
+    #     if self.manual_goal_active == False
+    #     if self.obstacle:
+    #         self.avoid_obstacle()
+    #     else:
+    #         if self.
+
+
+    def avoid_obstacle(self):
+        pass
 
     def goToGoal(self, minimum_speed=0.1, maximum_speed=2):
         goal_copy = copy.deepcopy(self.goal)
