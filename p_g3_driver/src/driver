@@ -14,6 +14,7 @@ import copy
 from visualization_msgs.msg import Marker, MarkerArray
 import random
 
+
 class Driver:
     def __init__(self):
         # ---------------------------------------------------
@@ -38,9 +39,7 @@ class Driver:
         topic_camera_info = "/" + self.player + '/camera/rgb/camera_info'
         topic_backcamera_info = "/" + self.player + '/back_camera/rgb/camera_info'
         topic_laser = "/" + self.player + '/scan'
-        topic_goal = '/move_base_simple/goal'
-        # FIXME Não necessita estar no Namespace?
-        # topic_goal = "/" + self.player + '/move_base_simple/goal'
+        topic_goal = "/" + self.player + '/move_base_simple/goal'
         self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
         self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
         self.subscriber_camera_info = message_filters.Subscriber(topic_camera_info, CameraInfo)
@@ -422,7 +421,7 @@ class Driver:
         self.players_coordenates()
         all_coord_players = self.coord_team_front + self.coord_prey_front + self.coord_hunter_front + self.coord_team_back + self.coord_prey_back + self.coord_hunter_back
         all_coord_laser = self.lidarcoordbig_backcamera + self.lidarcoordbig_frontcamera
-        range = 1.5 * self.robot_dimention/2
+        range = 1.5 * self.robot_dimention / 2
         max = 2 * self.robot_dimention
         coord_avoid = []
         for coord_laser in all_coord_laser:
@@ -509,7 +508,7 @@ class Driver:
             self.recievedGoal(0.1, 0.5)
 
     def avoid_obstacle(self):
-        dist = math.sqrt(self.closerobstacle_coord[0]**2 + self.closerobstacle_coord[0]**2)
+        dist = math.sqrt(self.closerobstacle_coord[0] ** 2 + self.closerobstacle_coord[0] ** 2)
 
     def runaway(self):
         self.goToGoal(0.4, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
@@ -546,13 +545,13 @@ class Driver:
             if mode == 'manual':
                 self.manual_goal_active = False
 
-
     def sendCommandCallback(self, event):
         self.strategy()
         twist = Twist()
         twist.linear.x = self.speed
         twist.angular.z = self.angle
         self.publisher_command.publish(twist)
+
 
 def main():
     # ---------------------------------------------------
@@ -566,6 +565,7 @@ def main():
     rate = rospy.Rate(10)
     rate.sleep()
     rospy.spin()
+
 
 if __name__ == '__main__':
     try:
