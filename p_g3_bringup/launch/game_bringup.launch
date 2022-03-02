@@ -9,7 +9,7 @@
         <arg name="x_pos" value="0.0"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" default="false"/>
+        <arg name="visualize" default="true"/>
         <arg name="driver" value="true"/>
     </include>
 
@@ -135,3 +135,4 @@
     <node name="set_player_names" pkg="th_referee" type="set_player_names" output="screen"/>
 
 </launch>
+
