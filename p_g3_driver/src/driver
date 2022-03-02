@@ -3,6 +3,7 @@
 import numpy as np
 import rospy
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
+# from std_msgs.msg import Str
 from tf2_geometry_msgs import PoseStamped, tf2_geometry_msgs
 from geometry_msgs.msg import Twist, Point
 from cv_bridge import CvBridge
@@ -116,9 +117,11 @@ class Driver:
         # ---------------------------------------------------
         topic_marker = "/" + self.player + '/marker'
         topic_motion = '/' + self.player + '/cmd_vel'
+        topic_chatter = '/' + self.player + '/chatter'
         self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
         self.publisher_marker = rospy.Publisher(topic_marker, MarkerArray, queue_size=1)
         self.publisher_command = rospy.Publisher(topic_motion, Twist, queue_size=1)
+        # self.publisher_chatter = rospy.Publisher(topic_chatter, String, queue_size=1)
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -508,7 +511,45 @@ class Driver:
             self.recievedGoal(0.1, 0.5)
 
     def avoid_obstacle(self):
-        dist = math.sqrt(self.closerobstacle_coord[0] ** 2 + self.closerobstacle_coord[0] ** 2)
+        # self.speed = 0
+        # self.angle = 0
+        # # Get closer obstacle in the front and back
+        # closer_coord = ()
+        # dist_obstacle = math.inf
+        # if self.coord_obstacle != []:
+        #     for coord in self.coord_obstacle:
+        #         if -self.robot_dimention < coord[0] < self.robot_dimention:
+        #             dist = math.sqrt(coord[0] ** 2 + coord[1] ** 2)
+        #             if dist < dist_obstacle:
+        #                 dist_obstacle = dist
+        #                 closer_coord = coord
+        # else:
+        #     self.wandering()
+        # x, y = closer_coord
+        # if dist_obstacle > 1.1 * self.robot_dimention:
+        #     # Front of the robot
+        #     if x > 0:
+        #         # Right side
+        #         if y > 0:
+        #             # Rotate left
+        #             self.speed = 0.5
+        #             self.angle = -0.3
+        #         else:
+        #             self.speed = 0.5
+        #             self.angle = 0.3
+        #     elif x < 0:
+        #         if y < 0:
+        #             # Rotate left
+        #             self.speed = 0.5
+        #             self.angle = -0.3
+        #         else:
+        #             self.speed = 0.5
+        #             self.angle = 0.3
+        #     else:
+        #         self.speed = -0.3
+        # else:
+        #     self.speed = -0.3
+        pass
 
     def runaway(self):
         self.goToGoal(0.4, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
