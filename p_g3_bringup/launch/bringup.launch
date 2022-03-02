@@ -6,7 +6,7 @@
     <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
     <arg name="player_name" default="p_g3"/>   # To set player name.
     <arg name="player_color" default="Red"/>        # To set player color.
-    <arg name="visualize" default="True"/>          # To set if we want to see rviz or not.
+    <arg name="visualize" default="True"/>          # To set if we want to see rviz
     <arg name="x_pos" default="0.0"/>
     <arg name="y_pos" default="-1.5"/>
     <arg name="z_pos" default="0.0"/>
@@ -26,18 +26,17 @@
             <arg name="z_pos" value="$(arg z_pos)"/>
         </include>
 
+        <!--Include do visualize.launch.-->
         <group if = "$(arg visualize)">
-            <!--Include do visualize.launch.-->
             <include file="$(find p_g3_bringup)/launch/visualize.launch">
                 <arg name="player_name" value="$(arg player_name)"/>
             </include>
         </group>
     </group>
+
     <group if="$(arg driver)">
         <node name="$(arg player_name)"  pkg="p_g3_driver"  type="driver" output="screen">
         </node>
     </group>
-<!--    &lt;!&ndash; Run driver.py script to each player &ndash;&gt;-->
-<!--    <node pkg="p_g3_player" type="driver.py" name="$(arg player_name)" output="screen"> </node>-->
 
 </launch>
