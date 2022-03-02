@@ -4,7 +4,7 @@ Repositório usado para a partilha de ficheiros referentes ao Trabalho Prático 
 
 Gil Viegas Nº
 
-Gonçalo Ribeiro Nº
+Gonçalo Ribeiro Nº93193
 
 Pedro Ribeiro Nº94287
 
