@@ -40,7 +40,6 @@ class Driver:
         topic_laser = "/" + self.player + '/scan'
         # FIXME Não necessita estar no Namespace?
         topic_goal = '/move_base_simple/goal'
-        self.subscriber_laser = message_filters.Subscriber(topic_laser, LaserScan)
         self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
         self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
         self.subscriber_camera_info = message_filters.Subscriber(topic_camera_info, CameraInfo)
@@ -103,10 +102,12 @@ class Driver:
         # ---------------------------------------------------
         self.tf_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
-        ts = message_filters.ApproximateTimeSynchronizer([self.subscriber_camera_info, self.subscriber_backcamera_info,
-                                                          self.subscriber_camera, self.subscriber_backcamera,
-                                                          self.subscriber_laser], 1, 1)
-        ts.registerCallback(self.subscribersCallback)
+        ts_camerainfo = message_filters.ApproximateTimeSynchronizer([self.subscriber_camera_info,
+                                                                     self.subscriber_backcamera_info], 1, 1)
+        ts_camerainfo.registerCallback(self.getCameraInfoCallback)
+        ts_cameraimage = message_filters.TimeSynchronizer([self.subscriber_camera, self.subscriber_backcamera], 1, 1)
+        ts_cameraimage.registerCallback(self.getCameraCallback)
+        self.subscriber_laser = rospy.Subscriber(topic_laser, LaserScan, self.getLidarPointsCallback)
         self.goal_subscriber = rospy.Subscriber(topic_goal, PoseStamped, self.goalReceivedCallback)
         # ---------------------------------------------------
         #   Topics to publish
@@ -157,10 +158,10 @@ class Driver:
             self.hunter = 'No one'
             self.prey = 'No one'
 
-    def subscribersCallback(self, imageInfo_front, imageInfo_back, image_front, image_back, lidar):
-        self.getCameraInfoCallback(imageInfo_front, imageInfo_back)
-        self.getCameraCallback(image_front, image_back)
-        self.getLidarPointsCallback(lidar)
+    # def subscribersCallback(self, imageInfo_front, imageInfo_back, image_front, image_back, lidar):
+    #     self.getCameraInfoCallback(imageInfo_front, imageInfo_back)
+    #     self.getCameraCallback(image_front, image_back)
+    #     self.getLidarPointsCallback(lidar)
         # self.goalReceivedCallback(goal)
 
     def getCameraCallback(self, msg_front, msg_back):
@@ -405,14 +406,14 @@ class Driver:
 
     def createMarkersCallBack(self):
         self.players_coordenates()
-        self.obstaclefinder()
+        # self.obstaclefinder()
         self.marker_generate(self.coord_team_front, self.team, 'front_camera')
         self.marker_generate(self.coord_prey_front, self.prey, 'front_camera')
         self.marker_generate(self.coord_hunter_front, self.hunter, 'front_camera')
         self.marker_generate(self.coord_team_back, self.team, 'back_camera')
         self.marker_generate(self.coord_prey_back, self.prey, 'back_camera')
         self.marker_generate(self.coord_hunter_back, self.hunter, 'back_camera')
-        self.marker_generate(self.coord_obstacle, 'obstacle', 'lidar')
+        # self.marker_generate(self.coord_obstacle, 'obstacle', 'lidar')
 
     def obstaclefinder(self):
         self.players_coordenates()
@@ -433,7 +434,7 @@ class Driver:
                     coord_avoid.append(coord_aux)
         self.coord_obstacle = list(dict.fromkeys(coord_avoid))
 
-    def find_closer_object(self):
+    def find_closest_object(self):
         # Get coordenates
         self.players_coordenates()
         self.obstaclefinder()
@@ -476,23 +477,17 @@ class Driver:
         # Closer object
         if dist_obstacle < dist_prey and dist_obstacle < dist_hunter:
             self.closerobstacle = True
-            print('prey ' + str(dist_prey))
-            print('hunter ' + str(dist_hunter))
-            print('wall ' + str(dist_obstacle))
+            print('Wall ' + str(dist_obstacle))
         elif dist_prey < dist_hunter and dist_prey < dist_obstacle:
             self.closerprey = True
-            print('prey ' + str(dist_prey))
-            print('hunter ' + str(dist_hunter))
-            print('wall ' + str(dist_obstacle))
+            print('Prey ' + str(dist_prey))
         elif dist_hunter < dist_prey and dist_hunter < dist_obstacle:
             self.closerhunter = True
-            print('prey ' + str(dist_prey))
-            print('hunter ' + str(dist_hunter))
-            print('wall ' + str(dist_obstacle))
+            print('Hunter ' + str(dist_hunter))
 
     def strategy(self):
         if not self.manual_goal_active:
-            self.find_closer_object()
+            self.find_closest_object()
             if self.closerobstacle:
                 self.avoid_obstacle()
             elif self.closerhunter:
@@ -555,11 +550,16 @@ class Driver:
 
 
 def main():
+    # ---------------------------------------------------
+    #   Initialization
+    # ---------------------------------------------------
     rospy.init_node('p_g3_driver', anonymous=False)
-    rospy.loginfo("I'm " + Driver().player + ", from team " + Driver().team +
-                  "\nI want to catch " + Driver().prey + " but I fear " + Driver().hunter)
+    driver = Driver()
+    # rospy.loginfo("I'm " + Driver().player + ", from team " + Driver().team +
+    #               "\nI want to catch " + Driver().prey + " but I fear " + Driver().hunter)
+    rate = rospy.Rate(10)
+    rate.sleep()
     rospy.spin()
-
 
 if __name__ == '__main__':
     try:
