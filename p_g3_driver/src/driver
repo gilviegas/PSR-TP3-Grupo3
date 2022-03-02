@@ -97,7 +97,6 @@ class Driver:
         # ---------------------------------------------------
         #   Goal
         # ---------------------------------------------------
-        self.goal = ()
         self.manual_goal_active = False
         self.angle = 0
         self.speed = 0
@@ -513,10 +512,10 @@ class Driver:
         dist = math.sqrt(self.closerobstacle_coord[0]**2 + self.closerobstacle_coord[0]**2)
 
     def runaway(self):
-        self.goToGoal(0.1, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
+        self.goToGoal(0.4, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
 
     def hunting(self):
-        self.goToGoal(0.1, 0.5, self.closerprey_coord, 'hunting')
+        self.goToGoal(0.4, 0.5, self.closerprey_coord, 'hunting')
 
     def wandering(self):
         coord = (random.randint(-4, 4), random.randint(-4, 4))
