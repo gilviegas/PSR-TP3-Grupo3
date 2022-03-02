@@ -19,6 +19,7 @@ class Driver:
         # ---------------------------------------------------
         #   Get team, hunter and prey
         # ---------------------------------------------------
+        self.recieved_goal = PoseStamped()
         self.team = ''
         self.team_colors = []
         self.hunter = ''
@@ -28,6 +29,7 @@ class Driver:
         self.player = ''
         self.allplayers = ''
         self.team_identification()
+        self.robot_dimention = 0.5
         # ---------------------------------------------------
         #   Topics to subscribe
         # ---------------------------------------------------
@@ -36,8 +38,9 @@ class Driver:
         topic_camera_info = "/" + self.player + '/camera/rgb/camera_info'
         topic_backcamera_info = "/" + self.player + '/back_camera/rgb/camera_info'
         topic_laser = "/" + self.player + '/scan'
+        topic_goal = '/move_base_simple/goal'
         # FIXME Não necessita estar no Namespace?
-        topic_goal = "/" + self.player + '/move_base_simple/goal'
+        # topic_goal = "/" + self.player + '/move_base_simple/goal'
         self.subscriber_camera = message_filters.Subscriber(topic_camera, Image)
         self.subscriber_backcamera = message_filters.Subscriber(topic_backcamera, Image)
         self.subscriber_camera_info = message_filters.Subscriber(topic_camera_info, CameraInfo)
@@ -188,15 +191,14 @@ class Driver:
         self.back_intrinsic = np.asarray(msg_back.K).reshape(3, 3)
 
     def goalReceivedCallback(self, msg):
-        # Verify if goal is in odom frame
-        # print('Received new goal')
-        goal = PoseStamped()
-        goal = copy.deepcopy(msg)
-        goal.header.stamp = rospy.Time.now()
-        # Tranform to base_footprint frame
-        goal_in_base_lik = self.tf_buffer.transform(goal, self.player + '/base_footprint', rospy.Duration(1))
-        self.goal = (goal_in_base_lik.pose.position.x, goal_in_base_lik.pose.position.y)
-        self.manual_goal_active = True
+        target_frame = self.player + '/odom'
+        try:
+            self.recieved_goal = self.tf_buffer.transform(msg, target_frame, rospy.Duration(1))
+            self.manual_goal_active = True
+            rospy.logwarn('New manual goal')
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            self.manual_goal_active = True
+            rospy.logerr('Could not get goal in the ' + target_frame + '! Goal ignored')
 
     def getLidarPointsCallback(self, msg):
         z = 0
@@ -421,8 +423,8 @@ class Driver:
         self.players_coordenates()
         all_coord_players = self.coord_team_front + self.coord_prey_front + self.coord_hunter_front + self.coord_team_back + self.coord_prey_back + self.coord_hunter_back
         all_coord_laser = self.lidarcoordbig_backcamera + self.lidarcoordbig_frontcamera
-        range = 0.75
-        max = 1
+        range = 1.5 * self.robot_dimention/2
+        max = 2 * self.robot_dimention
         coord_avoid = []
         for coord_laser in all_coord_laser:
             if max > coord_laser[0] > -max and max > coord_laser[1] > -max:
@@ -505,29 +507,38 @@ class Driver:
             else:
                 self.wandering()
         else:
-            self.goToGoal(0.1, 1.5, self.goal, 'manual')
+            self.recievedGoal(0.1, 0.5)
 
     def avoid_obstacle(self):
-        print('avoiding obstacle')
+        dist = math.sqrt(self.closerobstacle_coord[0]**2 + self.closerobstacle_coord[0]**2)
 
     def runaway(self):
-        self.goToGoal(0.1, 1.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
+        self.goToGoal(0.1, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
 
     def hunting(self):
-        self.goToGoal(0.1, 1.5, self.closerprey_coord, 'hunting')
+        self.goToGoal(0.1, 0.5, self.closerprey_coord, 'hunting')
 
     def wandering(self):
-        velocity = random.random()
-        coord = (random.randint(-2, 2), random.randint(-2, 2))
-        self.goToGoal(0.2, velocity, coord, 'wandering')
+        coord = (random.randint(-4, 4), random.randint(-4, 4))
+        self.goToGoal(0.2, 0.5, coord, 'wandering')
+
+    def recievedGoal(self, minimum_speed, maximum_speed):
+        goal_copy = copy.deepcopy(self.recieved_goal)  # make sure we don't change the stamp field of the goal
+        goal_copy.header.stamp = rospy.Time.now()
+        goal_in_base_link = self.tf_buffer.transform(goal_copy, self.player + '/base_footprint', rospy.Duration(1))
+        goal = (goal_in_base_link.pose.position.x, goal_in_base_link.pose.position.y)
+        self.goToGoal(minimum_speed, maximum_speed, goal, 'manual')
 
     def goToGoal(self, minimum_speed, maximum_speed, goal, mode):
         x = goal[0]
         y = goal[1]
         self.angle = math.atan2(y, x)
+        #     self.angle = 0
+        # else:
+        #     self.angle = math.atan2(y, x)
         distance_to_goal = math.sqrt(x ** 2 + y ** 2)
         # Limit minimun speed
-        self.speed = max(minimum_speed, 0.2 * distance_to_goal)
+        self.speed = max(minimum_speed, 0.5 * distance_to_goal)
         # Limit maximum speed
         self.speed = min(maximum_speed, self.speed)
         if distance_to_goal < 0.05:
@@ -535,6 +546,7 @@ class Driver:
             self.speed = 0
             if mode == 'manual':
                 self.manual_goal_active = False
+
 
     def sendCommandCallback(self, event):
         self.strategy()

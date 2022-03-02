@@ -5,7 +5,6 @@
   <xacro:arg name="imu_visual"    default="false"/>
 
   <gazebo reference="base_link">
-<!--    <material>Gazebo/Red</material>-->
     <material>Gazebo/${player_color}</material>
   </gazebo>
 
@@ -153,7 +152,6 @@
       <camera>
           <horizontal_fov>1.085595</horizontal_fov>
           <image>
-<!--              <width>640</width>-->
               <width>900</width>
               <height>480</height>
               <format>R8G8B8</format>
@@ -189,7 +187,6 @@
       <camera>
           <horizontal_fov>1.085595</horizontal_fov>
           <image>
-<!--              <width>640</width>-->
               <width>900</width>
               <height>480</height>
               <format>R8G8B8</format>
