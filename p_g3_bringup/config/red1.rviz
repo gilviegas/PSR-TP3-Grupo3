@@ -12,8 +12,8 @@ Panels:
         - /RobotModel1
         - /Pose1
         - /MarkerArray1
-        - /MarkerArray1/Status1
         - /MarkerArray1/Namespaces1
+        - /Map1
       Splitter Ratio: 0.47652581334114075
     Tree Height: 255
   - Class: rviz/Selection
@@ -34,7 +34,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Image
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -213,10 +213,18 @@ Visualization Manager:
       Marker Topic: /red1/marker
       Name: MarkerArray
       Namespaces:
-        back_camera_red: true
-        front_camera_red: true
-        lidar_obstacle: true
+        {}
       Queue Size: 100
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /red1/map
+      Unreliable: false
+      Use Timestamp: false
       Value: true
   Enabled: true
   Global Options:
@@ -287,4 +295,4 @@ Window Geometry:
     collapsed: true
   Width: 1386
   X: 375
-  Y: 65
+  Y: 28

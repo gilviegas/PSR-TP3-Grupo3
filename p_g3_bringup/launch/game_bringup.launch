@@ -88,7 +88,7 @@
 <!--        <arg name="player_name" value="green3"/>-->
 <!--    </include>-->
 
-    <!-- Blue team-->
+<!--    &lt;!&ndash; Blue team&ndash;&gt;-->
 <!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
 <!--        <arg name="player_name" value="blue1"/>-->
 <!--        <arg name="player_color" value="Blue"/>-->
@@ -126,7 +126,6 @@
 <!--        <arg name="visualize" default="false"/>-->
 <!--        <arg name="driver" value="true"/>-->
 <!--    </include>-->
-
 
 <!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
 <!--        <arg name="player_name" value="blue3"/>-->
