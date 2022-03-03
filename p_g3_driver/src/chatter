@@ -1,25 +1,111 @@
 #!/usr/bin/env python3
 import rospy
 from colorama import Back, Style, Fore
+from prettytable import PrettyTable
+
 from p_g3_driver.msg import chat
 
 
 class Chatter:
     def __init__(self):
+        self.red1 = False
+        self.red2 = False
+        self.red3 = False
+        self.green1 = False
+        self.green2 = False
+        self.green3 = False
+        self.blue1 = False
+        self.blue2 = False
+        self.blue3 = False
+        self.red1_chat = chat()
+        self.red2_chat = chat()
+        self.red3_chat = chat()
+        self.green1_chat = chat()
+        self.green2_chat = chat()
+        self.green3_chat = chat()
+        self.blue1_chat = chat()
+        self.blue2_chat = chat()
+        self.blue3_chat = chat()
         red_players = rospy.get_param('/red_players')
         green_players = rospy.get_param('/green_players')
         blue_players = rospy.get_param('/blue_players')
         allplayers = [*red_players, *green_players, *blue_players]
         for player in allplayers:
             rospy.Subscriber('/' + player + '/chatter', chat, self.stateCallback)
+        self.timer = rospy.Timer(rospy.Duration(0.1), self.print)
 
     def stateCallback(self, chat):
-        if 'red1' in chat.player or 'red2' in chat.player or 'red3' in chat.player:
-            print(Fore.RED + chat.player + ' ' + Style.RESET_ALL + chat.status)
-        elif 'green1' in chat.player or 'green2' in chat.player or 'green3' in chat.player:
-            print(Fore.GREEN + chat.player + ' ' + Style.RESET_ALL + chat.status)
-        elif 'blue1' in chat.player or 'blue2' in chat.player or 'blue3' in chat.player:
-            print(Fore.BLUE + chat.player + ' ' + Style.RESET_ALL + chat.status)
+        if 'red1' in chat.player:
+            self.red1 = True
+            self.red1_chat = chat
+        elif 'red2' in chat.player:
+            self.red2 = True
+            self.red2_chat = chat
+        elif 'red3' in chat.player:
+            self.red3 = True
+            self.red3_chat = chat
+        elif 'green1' in chat.player:
+            self.green1 = True
+            self.green1_chat = chat
+        elif 'green2' in chat.player:
+            self.green2 = True
+            self.green2_chat = chat
+        elif 'green3' in chat.player:
+            self.green3 = True
+            self.green3_chat = chat
+        elif 'blue1' in chat.player:
+            self.blue1 = True
+            self.blue1_chat = chat
+        elif 'blue2' in chat.player:
+            self.blue2 = True
+            self.blue2_chat = chat
+        elif 'blue3' in chat.player:
+            self.blue3 = True
+            self.blue3_chat = chat
+
+    def print(self, event):
+        print(Style.BRIGHT + '\nPlayers Status:' + Style.RESET_ALL)
+        table = PrettyTable([Back.LIGHTWHITE_EX + "Player", "Team", "Status" + Style.RESET_ALL])
+        if self.red1:
+            table.add_row([Fore.RED + 'Red1' + Fore.RESET,
+                           Fore.RED + 'Red' + Fore.RESET,
+                           self.red1_chat.status])
+        if self.red2:
+            table.add_row([Fore.RED + 'Red2' + Fore.RESET,
+                           Fore.RED + 'Red' + Fore.RESET,
+                           self.red2_chat.status])
+        if self.red3:
+            table.add_row([Fore.RED + 'Red3' + Fore.RESET,
+                           Fore.RED + 'Red' + Fore.RESET,
+                           self.red3_chat.status])
+        if self.green1:
+            table.add_row([Fore.GREEN + 'Green1' + Fore.RESET,
+                           Fore.GREEN + 'Green' + Fore.RESET,
+                           self.green1_chat.status])
+        if self.green2:
+            table.add_row([Fore.GREEN + 'Green2' + Fore.RESET,
+                           Fore.GREEN + 'Green' + Fore.RESET,
+                           self.green2_chat.status])
+        if self.green3:
+            table.add_row([Fore.GREEN + 'Green3' + Fore.RESET,
+                           Fore.GREEN + 'Green' + Fore.RESET,
+                           self.green3_chat.status])
+        if self.blue1:
+            table.add_row([Fore.BLUE + 'Blue1' + Fore.RESET,
+                           Fore.BLUE + 'Blue' + Fore.RESET,
+                           self.blue1_chat.status])
+        if self.blue2:
+            table.add_row([Fore.BLUE + 'Blue2' + Fore.RESET,
+                           Fore.BLUE + 'Blue' + Fore.RESET,
+                           self.blue2_chat.status])
+        if self.blue3:
+            table.add_row([Fore.BLUE + 'Blue3' + Fore.RESET,
+                           Fore.BLUE + 'Blue' + Fore.RESET,
+                           self.blue3_chat.status])
+        table.align = 'c'
+        table.align[Back.LIGHTWHITE_EX + "Player"] = 'l'
+        table.align['Team'] = 'l'
+        print(table)
 
 
 def main():
