@@ -283,38 +283,41 @@ class Driver:
             rospy.logerr('Error getting lidar points')
 
     def lidar_points_to_pixels(self, posestamped, frame, intrinsic, output, output2, coord_output):
-        # Get the laser points in the camera frame
-        transform = self.tf_buffer.lookup_transform(frame,
-                                                    posestamped.header.frame_id,
-                                                    posestamped.header.stamp,
-                                                    rospy.Duration(1))
-        lidarpoint_camera = tf2_geometry_msgs.do_transform_pose(posestamped, transform)
-        # Transform to pixels
-        lidarpixel_camera_aux1 = np.dot(intrinsic,
-                                        np.array([[lidarpoint_camera.pose.position.x],
-                                                  [lidarpoint_camera.pose.position.y],
-                                                  [lidarpoint_camera.pose.position.z]]))
-        lidarpixel_camera_aux2 = np.array(
-            [[lidarpixel_camera_aux1[0, 0] / lidarpixel_camera_aux1[2, 0]],
-             [lidarpixel_camera_aux1[1, 0] / lidarpixel_camera_aux1[2, 0]]])
-
-        # Get only the pixels that matter
-        if 0 < lidarpixel_camera_aux2[0, 0] < self.front_width and 0 < lidarpixel_camera_aux2[1, 0] < self.front_height:
-            lidarpixel_camera = np.array([[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
-            output.append(lidarpixel_camera)
-
-        # Making sure that the coordenate matrix is the same for getting the pixels and the future reversing the process
-        coord_base_scan = (posestamped.pose.position.x, posestamped.pose.position.y, posestamped.pose.position.z)
-
-        # Get a pixel matrix of the same size of points matrix for reversing process
         try:
-            lidarpixel_camera_aux3 = np.array(
-                [[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
-        except ValueError:
-            lidarpixel_camera_aux3 = np.array([[math.inf], [math.inf]])
+            # Get the laser points in the camera frame
+            transform = self.tf_buffer.lookup_transform(frame,
+                                                        posestamped.header.frame_id,
+                                                        posestamped.header.stamp,
+                                                        rospy.Duration(1))
+            lidarpoint_camera = tf2_geometry_msgs.do_transform_pose(posestamped, transform)
+            # Transform to pixels
+            lidarpixel_camera_aux1 = np.dot(intrinsic,
+                                            np.array([[lidarpoint_camera.pose.position.x],
+                                                      [lidarpoint_camera.pose.position.y],
+                                                      [lidarpoint_camera.pose.position.z]]))
+            lidarpixel_camera_aux2 = np.array(
+                [[lidarpixel_camera_aux1[0, 0] / lidarpixel_camera_aux1[2, 0]],
+                 [lidarpixel_camera_aux1[1, 0] / lidarpixel_camera_aux1[2, 0]]])
 
-        output2.append(lidarpixel_camera_aux3)
-        coord_output.append(coord_base_scan)
+            # Get only the pixels that matter
+            if 0 < lidarpixel_camera_aux2[0, 0] < self.front_width and 0 < lidarpixel_camera_aux2[1, 0] < self.front_height:
+                lidarpixel_camera = np.array([[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
+                output.append(lidarpixel_camera)
+
+            # Making sure that the coordenate matrix is the same for getting the pixels and the future reversing the process
+            coord_base_scan = (posestamped.pose.position.x, posestamped.pose.position.y, posestamped.pose.position.z)
+
+            # Get a pixel matrix of the same size of points matrix for reversing process
+            try:
+                lidarpixel_camera_aux3 = np.array(
+                    [[round(lidarpixel_camera_aux2[0, 0])], [round(lidarpixel_camera_aux2[1, 0])]])
+            except ValueError:
+                lidarpixel_camera_aux3 = np.array([[math.inf], [math.inf]])
+
+            output2.append(lidarpixel_camera_aux3)
+            coord_output.append(coord_base_scan)
+        except ():
+            rospy.logerr('Error transforming lidar points to pixels')
 
     def image_out(self):
         frontimage = copy.deepcopy(self.frontcameraimage)
@@ -558,71 +561,45 @@ class Driver:
         if not self.manual_goal_active:
             self.find_closest_object()
             if self.closerobstacle:
+                self.chat.status = 'Avoiding obstacle'
+                self.publisher_chatter.publish(self.chat)
                 self.avoid_obstacle()
             elif self.closerhunter:
+                self.chat.status = 'Running away'
+                self.publisher_chatter.publish(self.chat)
                 self.runaway()
             elif self.closerprey:
+                self.chat.status = 'Hunting'
+                self.publisher_chatter.publish(self.chat)
                 self.hunting()
             else:
+                self.chat.status = 'Looking for someone'
+                self.publisher_chatter.publish(self.chat)
                 self.wandering()
         else:
+            self.chat.status = 'Going to goal'
+            self.publisher_chatter.publish(self.chat)
             self.recievedGoal(0.1, 0.5)
 
     def avoid_obstacle(self):
-        self.chat.status = 'Avoiding obstacle'
-        self.publisher_chatter.publish(self.chat)
         self.speed = 0
         self.angle = 0
-        # Get closer obstacle in the front and back
-        closer_coord = ()
-        dist_obstacle = math.inf
-        if self.coord_obstacle != []:
-            for coord in self.coord_obstacle:
-                if -self.robot_dimention < coord[0] < self.robot_dimention:
-                    dist = math.sqrt(coord[0] ** 2 + coord[1] ** 2)
-                    if dist < dist_obstacle:
-                        dist_obstacle = dist
-                        closer_coord = coord
+        x = self.closerobstacle_coord[0]
+        y = self.closerobstacle_coord[1]
+        dist = math.sqrt(x ** 2 + y ** 2)
+        if dist > 1.1 * self.robot_dimention:
+            self.goToGoal(0.1, 0.15, (-x, -y), 'avoid')
         else:
-            self.wandering()
-        x, y = closer_coord
-        if dist_obstacle > 1.1 * self.robot_dimention:
-            # Front of the robot
-            if x > 0:
-                # Right side
-                if y > 0:
-                    # Rotate left
-                    self.speed = 0.5
-                    self.angle = -0.3
-                else:
-                    self.speed = 0.5
-                    self.angle = 0.3
-            elif x < 0:
-                if y < 0:
-                    # Rotate left
-                    self.speed = 0.5
-                    self.angle = -0.3
-                else:
-                    self.speed = 0.5
-                    self.angle = 0.3
-            else:
-                self.speed = -0.3
-        else:
-            self.speed = -0.3
+            self.speed = -0.5
+            self.angle = 0
 
     def runaway(self):
-        self.chat.status = 'Running away'
-        self.publisher_chatter.publish(self.chat)
         self.goToGoal(0.4, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
 
     def hunting(self):
-        self.chat.status = 'Hunting'
-        self.publisher_chatter.publish(self.chat)
         self.goToGoal(0.4, 0.5, self.closerprey_coord, 'hunting')
 
     def wandering(self):
-        self.chat.status = 'Looking for someone'
-        self.publisher_chatter.publish(self.chat)
         coord = (random.randint(-3, 3), random.randint(-3, 3))
         self.goToGoal(0.2, 0.5, coord, 'wandering')
 

@@ -9,7 +9,7 @@
         <arg name="x_pos" value="0.0"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="true"/>
+        <arg name="visualize" value="false"/>
         <arg name="driver" value="true"/>
     </include>
 
