@@ -124,10 +124,14 @@ class Driver:
         topic_marker = "/" + self.player + '/marker'
         topic_motion = '/' + self.player + '/cmd_vel'
         topic_chatter = '/' + self.player + '/chatter'
+        topic_imagefront = '/' + self.player + '/imagefront'
+        topic_imageback = '/' + self.player + '/imageback'
         self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
         self.publisher_marker = rospy.Publisher(topic_marker, MarkerArray, queue_size=1)
         self.publisher_command = rospy.Publisher(topic_motion, Twist, queue_size=1)
         self.publisher_chatter = rospy.Publisher(topic_chatter, chat, queue_size=1)
+        self.publisher_imagefront = rospy.Publisher(topic_imagefront, Image, queue_size=1)
+        self.publisher_imageback = rospy.Publisher(topic_imageback, Image, queue_size=1)
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -187,7 +191,7 @@ class Driver:
         self.Centroid(self.frontcameraimage, self.front_hunter_centroids, 'Hunter')
         self.Centroid(self.frontcameraimage, self.front_prey_centroids, 'Prey')
         self.createMarkersCallBack()
-        # TODO Meter parametro para escolher visualizar imagem ou não
+        self.image_out()
 
     def getCameraInfoCallback(self, msg_front, msg_back):
         self.front_height = msg_front.height
@@ -283,16 +287,37 @@ class Driver:
         output2.append(lidarpixel_camera_aux3)
         coord_output.append(coord_base_scan)
 
-    def image_lidar(self):
+    def image_out(self):
+        frontimage = copy.deepcopy(self.frontcameraimage)
+        backimage = copy.deepcopy(self.backcameraimage)
         for item in self.lidarpixels_frontcamera:
-            cv2.drawMarker(self.frontcameraimage, (item[0, 0], item[1, 0]), (0, 0, 255), markerType=cv2.MARKER_STAR,
-                           markerSize=40, thickness=2, line_type=cv2.LINE_AA)
+            cv2.drawMarker(frontimage, (item[0, 0], item[1, 0]), (0, 0, 0), markerType=cv2.MARKER_STAR,
+                           markerSize=40, thickness=2, line_type=cv2.LINE_8)
         for item in self.lidarpixels_backcamera:
-            cv2.drawMarker(self.backcameraimage, (item[0, 0], item[1, 0]), (0, 0, 255), markerType=cv2.MARKER_STAR,
-                           markerSize=40, thickness=2, line_type=cv2.LINE_AA)
-        cv2.imshow(self.player + ' frontal', self.frontcameraimage)
-        cv2.imshow(self.player + ' traseira', self.backcameraimage)
-        cv2.waitKey(1)
+            cv2.drawMarker(backimage, (item[0, 0], item[1, 0]), (0, 0, 0), markerType=cv2.MARKER_STAR,
+                           markerSize=40, thickness=2, line_type=cv2.LINE_8)
+        self.image_centroid(backimage, self.back_team_centroids, self.team)
+        self.image_centroid(backimage, self.back_prey_centroids, self.prey)
+        self.image_centroid(backimage, self.back_hunter_centroids, self.hunter)
+        self.image_centroid(frontimage, self.front_team_centroids, self.team)
+        self.image_centroid(frontimage, self.front_prey_centroids, self.prey)
+        self.image_centroid(frontimage, self.front_hunter_centroids, self.hunter)
+        self.publisher_imagefront.publish(self.bridge.cv2_to_imgmsg(frontimage, encoding="passthrough"))
+        self.publisher_imageback.publish(self.bridge.cv2_to_imgmsg(backimage, encoding="passthrough"))
+
+    def image_centroid(self, image, centroid_list, team):
+        if team == 'red':
+            teamcolor = (0, 0, 255)
+        elif team == 'green':
+            teamcolor = (0, 255, 0)
+        elif team == 'blue':
+            teamcolor = (255, 0, 0)
+        else:
+            teamcolor = (255, 255, 255)
+        for centroid in centroid_list:
+            cX, cY = centroid
+            cv2.circle(image, (cX, cY), 5, teamcolor, -1)
+            cv2.putText(image, team, (cX - 25, cY - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, teamcolor, 2)
 
     def Centroid(self, image, centroid_data, team):
         mask_team = cv2.inRange(image, self.team_colors[0], self.team_colors[1])
