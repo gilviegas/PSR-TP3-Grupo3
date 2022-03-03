@@ -419,7 +419,7 @@ class Driver:
                     coord = lidar_coord[idx]
                     coord_list.append(coord)
                 except ValueError:
-                    print('Error getting coordenate')
+                    rospy.logerr('Error getting coordenate')
         else:
             coord_list = []
         return coord_list
@@ -549,13 +549,10 @@ class Driver:
         # Closer object
         if dist_obstacle < dist_prey and dist_obstacle < dist_hunter:
             self.closerobstacle = True
-            # print('Wall ' + str(dist_obstacle))
         elif dist_prey < dist_hunter and dist_prey < dist_obstacle:
             self.closerprey = True
-            # print('Prey ' + str(dist_prey))
         elif dist_hunter < dist_prey and dist_hunter < dist_obstacle:
             self.closerhunter = True
-            # print('Hunter ' + str(dist_hunter))
 
     def strategy(self):
         if not self.manual_goal_active:
@@ -574,44 +571,44 @@ class Driver:
     def avoid_obstacle(self):
         self.chat.status = 'Avoiding obstacle'
         self.publisher_chatter.publish(self.chat)
-        # self.speed = 0
-        # self.angle = 0
-        # # Get closer obstacle in the front and back
-        # closer_coord = ()
-        # dist_obstacle = math.inf
-        # if self.coord_obstacle != []:
-        #     for coord in self.coord_obstacle:
-        #         if -self.robot_dimention < coord[0] < self.robot_dimention:
-        #             dist = math.sqrt(coord[0] ** 2 + coord[1] ** 2)
-        #             if dist < dist_obstacle:
-        #                 dist_obstacle = dist
-        #                 closer_coord = coord
-        # else:
-        #     self.wandering()
-        # x, y = closer_coord
-        # if dist_obstacle > 1.1 * self.robot_dimention:
-        #     # Front of the robot
-        #     if x > 0:
-        #         # Right side
-        #         if y > 0:
-        #             # Rotate left
-        #             self.speed = 0.5
-        #             self.angle = -0.3
-        #         else:
-        #             self.speed = 0.5
-        #             self.angle = 0.3
-        #     elif x < 0:
-        #         if y < 0:
-        #             # Rotate left
-        #             self.speed = 0.5
-        #             self.angle = -0.3
-        #         else:
-        #             self.speed = 0.5
-        #             self.angle = 0.3
-        #     else:
-        #         self.speed = -0.3
-        # else:
-        #     self.speed = -0.3
+        self.speed = 0
+        self.angle = 0
+        # Get closer obstacle in the front and back
+        closer_coord = ()
+        dist_obstacle = math.inf
+        if self.coord_obstacle != []:
+            for coord in self.coord_obstacle:
+                if -self.robot_dimention < coord[0] < self.robot_dimention:
+                    dist = math.sqrt(coord[0] ** 2 + coord[1] ** 2)
+                    if dist < dist_obstacle:
+                        dist_obstacle = dist
+                        closer_coord = coord
+        else:
+            self.wandering()
+        x, y = closer_coord
+        if dist_obstacle > 1.1 * self.robot_dimention:
+            # Front of the robot
+            if x > 0:
+                # Right side
+                if y > 0:
+                    # Rotate left
+                    self.speed = 0.5
+                    self.angle = -0.3
+                else:
+                    self.speed = 0.5
+                    self.angle = 0.3
+            elif x < 0:
+                if y < 0:
+                    # Rotate left
+                    self.speed = 0.5
+                    self.angle = -0.3
+                else:
+                    self.speed = 0.5
+                    self.angle = 0.3
+            else:
+                self.speed = -0.3
+        else:
+            self.speed = -0.3
 
     def runaway(self):
         self.chat.status = 'Running away'
@@ -626,7 +623,7 @@ class Driver:
     def wandering(self):
         self.chat.status = 'Looking for someone'
         self.publisher_chatter.publish(self.chat)
-        coord = (random.randint(-4, 4), random.randint(-4, 4))
+        coord = (random.randint(-3, 3), random.randint(-3, 3))
         self.goToGoal(0.2, 0.5, coord, 'wandering')
 
     def recievedGoal(self, minimum_speed, maximum_speed):
@@ -665,6 +662,9 @@ def main():
     # ---------------------------------------------------
     rospy.init_node('p_g3_driver', anonymous=False)
     driver = Driver()
+    print('My name is ' + driver.player + '. I am team ' + driver.team + ' I am hunting '
+          + str(rospy.get_param('/' + driver.prey + '_players')) + ' and fleeing from '
+          + str(rospy.get_param('/' + driver.hunter + '_players')))
     # ---------------------------------------------------
     #   Execution
     # ---------------------------------------------------
