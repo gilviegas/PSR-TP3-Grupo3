@@ -342,15 +342,16 @@ class Driver:
         # Get new contours
         contours, _ = cv2.findContours(mask3, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         for c in contours:
-            # calculate moments for each contour
-            M = cv2.moments(c)
-            # calculate x,y coordinate of center
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
-            else:
-                cX, cY = 0, 0
-            centroid_data.append((cX, cY))
+            if cv2.contourArea(c) > 1000:
+                # calculate moments for each contour
+                M = cv2.moments(c)
+                # calculate x,y coordinate of center
+                if M["m00"] != 0:
+                    cX = int(M["m10"] / M["m00"])
+                    cY = int(M["m01"] / M["m00"])
+                else:
+                    cX, cY = 0, 0
+                centroid_data.append((cX, cY))
 
     def centroid_to_lidar(self, centroid, lidar_pixels, lidar_coord, lidar_pixels_big):
         # Transform list of arrays to list of points
