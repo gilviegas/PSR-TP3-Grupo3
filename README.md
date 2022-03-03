@@ -22,8 +22,6 @@ Para o gmapping foi utilizado o robô de cor vermelha ("Red1") na Arena 3.
 
 TeamHunt: Neste modo de jogo os robôs caçam e fogem de outros robôs, usando para isso um modo de condução automático.
 
-Video Exemplo: https://youtu.be/GyCqsKmU7m0
-
 Para inciar este modo de jogo, começa-se por abrir o Gazebo
 
     roslaunch p_g3_bringup gazebo.launch
