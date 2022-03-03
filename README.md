@@ -2,7 +2,7 @@
 
 Repositório usado para a partilha de ficheiros referentes ao Trabalho Prático Numero 3 da Unidade Curricular de Projeto de Sistemas Robóticos pela equipa:
 
-Gil Viegas Nº    (https://github.com/gilviegas)
+Gil Viegas Nº99576 (https://github.com/gilviegas)
 
 Gonçalo Ribeiro Nº93193 (https://github.com/GoncaloR00)
 
