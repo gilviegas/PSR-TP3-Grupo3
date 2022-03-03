@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+
+allplayers = {'red': rospy.get_param('/red_players'),
+                   'green': rospy.get_param('/green_players'),
+                   'blue': rospy.get_param('/blue_players')}

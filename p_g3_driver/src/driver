@@ -14,6 +14,7 @@ import tf2_ros
 import copy
 from visualization_msgs.msg import Marker, MarkerArray
 import random
+from p_g3_driver.msg import chat
 
 
 class Driver:
@@ -101,6 +102,11 @@ class Driver:
         self.angle = 0
         self.speed = 0
         # ---------------------------------------------------
+        #   Output message
+        # ---------------------------------------------------
+        self.chat = chat()
+        self.chat.player = self.player
+        # ---------------------------------------------------
         #   Subscription and funtion calling
         # ---------------------------------------------------
         self.tf_buffer = tf2_ros.Buffer()
@@ -121,7 +127,7 @@ class Driver:
         self.timer = rospy.Timer(rospy.Duration(0.1), self.sendCommandCallback)
         self.publisher_marker = rospy.Publisher(topic_marker, MarkerArray, queue_size=1)
         self.publisher_command = rospy.Publisher(topic_motion, Twist, queue_size=1)
-        # self.publisher_chatter = rospy.Publisher(topic_chatter, String, queue_size=1)
+        self.publisher_chatter = rospy.Publisher(topic_chatter, chat, queue_size=1)
 
     def team_identification(self):
         self.allplayers = {'red': rospy.get_param('/red_players'),
@@ -511,6 +517,8 @@ class Driver:
             self.recievedGoal(0.1, 0.5)
 
     def avoid_obstacle(self):
+        self.chat.status = 'Avoiding obstacle'
+        self.publisher_chatter.publish(self.chat)
         # self.speed = 0
         # self.angle = 0
         # # Get closer obstacle in the front and back
@@ -549,15 +557,20 @@ class Driver:
         #         self.speed = -0.3
         # else:
         #     self.speed = -0.3
-        pass
 
     def runaway(self):
+        self.chat.status = 'Running away'
+        self.publisher_chatter.publish(self.chat)
         self.goToGoal(0.4, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
 
     def hunting(self):
+        self.chat.status = 'Hunting'
+        self.publisher_chatter.publish(self.chat)
         self.goToGoal(0.4, 0.5, self.closerprey_coord, 'hunting')
 
     def wandering(self):
+        self.chat.status = 'Looking for someone'
+        self.publisher_chatter.publish(self.chat)
         coord = (random.randint(-4, 4), random.randint(-4, 4))
         self.goToGoal(0.2, 0.5, coord, 'wandering')
 
@@ -572,9 +585,6 @@ class Driver:
         x = goal[0]
         y = goal[1]
         self.angle = math.atan2(y, x)
-        #     self.angle = 0
-        # else:
-        #     self.angle = math.atan2(y, x)
         distance_to_goal = math.sqrt(x ** 2 + y ** 2)
         # Limit minimun speed
         self.speed = max(minimum_speed, 0.5 * distance_to_goal)

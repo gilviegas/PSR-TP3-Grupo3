@@ -1,0 +1,2 @@
+string player
+string status
