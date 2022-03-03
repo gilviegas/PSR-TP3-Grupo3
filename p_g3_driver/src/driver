@@ -22,7 +22,6 @@ class Driver:
         # ---------------------------------------------------
         #   Get team, hunter and prey
         # ---------------------------------------------------
-        self.recieved_goal = PoseStamped()
         self.team = ''
         self.team_colors = []
         self.hunter = ''
@@ -98,6 +97,7 @@ class Driver:
         # ---------------------------------------------------
         #   Goal
         # ---------------------------------------------------
+        self.recieved_goal = PoseStamped()
         self.manual_goal_active = False
         self.angle = 0
         self.speed = 0

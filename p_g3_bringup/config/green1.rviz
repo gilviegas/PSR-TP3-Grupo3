@@ -59,7 +59,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /green1/camera/rgb/image_raw
+      Image Topic: /green1/imagefront
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -71,7 +71,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /green1/back_camera/rgb/image_raw
+      Image Topic: /green1/imageback
       Max Value: 1
       Median window: 5
       Min Value: 0
