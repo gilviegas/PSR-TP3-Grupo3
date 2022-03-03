@@ -489,7 +489,7 @@ class Driver:
         all_coord_players = self.coord_team_front + self.coord_prey_front + self.coord_hunter_front + self.coord_team_back + self.coord_prey_back + self.coord_hunter_back
         all_coord_laser = self.lidarcoordbig_backcamera + self.lidarcoordbig_frontcamera
         range = 1.5 * self.robot_dimention / 2
-        max = 2 * self.robot_dimention
+        max = 1.5 * self.robot_dimention
         coord_avoid = []
         for coord_laser in all_coord_laser:
             if max > coord_laser[0] > -max and max > coord_laser[1] > -max:
@@ -587,11 +587,15 @@ class Driver:
         x = self.closerobstacle_coord[0]
         y = self.closerobstacle_coord[1]
         dist = math.sqrt(x ** 2 + y ** 2)
-        if dist > 1.1 * self.robot_dimention:
+        if dist > 0.8 * self.robot_dimention:
             self.goToGoal(0.1, 0.15, (-x, -y), 'avoid')
         else:
-            self.speed = -0.5
-            self.angle = 0
+            if x > 0:
+                self.speed = -0.5
+                self.angle = 0
+            else:
+                self.speed = 0.5
+                self.angle = 0
 
     def runaway(self):
         self.goToGoal(0.4, 0.5, (-self.closerhunter_coord[0], -self.closerhunter_coord[1]), 'runaway')
