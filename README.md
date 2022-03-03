@@ -17,6 +17,7 @@ Condução Manual Turtlebot3 em Pista: https://youtu.be/OEAvULfRDtY
 Para a condução manual foi usado o robô de Cor vermelha("Red1") com as suas respetivas câmaras conseguindo assim evitar os obtáculos através do ficheiro myteleop desenvolvido nas aulas teóricas.
 
 Condução manual com uso do gmapping:https://youtu.be/Cv59HHV9rXU
+
 Para o gmapping foi utilizado o robô de cor vermelha ("Red1") na Arena 3.
 
 TeamHunt: Neste modo de jogo os robôs caçam e fogem de outros robôs, usando para isso um modo de condução automático.
