@@ -183,22 +183,49 @@ class Driver:
         self.front_hunter_centroids = []
         self.front_prey_centroids = []
         # Get centroids
-        self.Centroid(self.backcameraimage, self.back_team_centroids, 'Team')
-        self.Centroid(self.backcameraimage, self.back_hunter_centroids, 'Hunter')
-        self.Centroid(self.backcameraimage, self.back_prey_centroids, 'Prey')
-        self.Centroid(self.frontcameraimage, self.front_team_centroids, 'Team')
-        self.Centroid(self.frontcameraimage, self.front_hunter_centroids, 'Hunter')
-        self.Centroid(self.frontcameraimage, self.front_prey_centroids, 'Prey')
-        self.createMarkersCallBack()
-        self.image_out()
+        try:
+            self.Centroid(self.backcameraimage, self.back_team_centroids, 'Team')
+        except ():
+            rospy.logerr('Error getting centroid')
+        try:
+            self.Centroid(self.backcameraimage, self.back_hunter_centroids, 'Hunter')
+        except ():
+            rospy.logerr('Error getting centroid')
+        try:
+            self.Centroid(self.backcameraimage, self.back_prey_centroids, 'Prey')
+        except ():
+            rospy.logerr('Error getting centroid')
+        try:
+            self.Centroid(self.frontcameraimage, self.front_team_centroids, 'Team')
+        except ():
+            rospy.logerr('Error getting centroid')
+        try:
+            self.Centroid(self.frontcameraimage, self.front_hunter_centroids, 'Hunter')
+        except ():
+            rospy.logerr('Error getting centroid')
+        try:
+            self.Centroid(self.frontcameraimage, self.front_prey_centroids, 'Prey')
+        except ():
+            rospy.logerr('Error getting centroid')
+        try:
+            self.createMarkersCallBack()
+        except ():
+            rospy.logerr('Error creating markers')
+        try:
+            self.image_out()
+        except ():
+            rospy.logerr('Error outputing resultant image')
 
     def getCameraInfoCallback(self, msg_front, msg_back):
-        self.front_height = msg_front.height
-        self.front_width = msg_front.width
-        self.front_intrinsic = np.asarray(msg_front.K).reshape(3, 3)
-        self.back_height = msg_back.height
-        self.back_width = msg_back.width
-        self.back_intrinsic = np.asarray(msg_back.K).reshape(3, 3)
+        try:
+            self.front_height = msg_front.height
+            self.front_width = msg_front.width
+            self.front_intrinsic = np.asarray(msg_front.K).reshape(3, 3)
+            self.back_height = msg_back.height
+            self.back_width = msg_back.width
+            self.back_intrinsic = np.asarray(msg_back.K).reshape(3, 3)
+        except():
+            rospy.logerr('Error getting image info')
 
     def goalReceivedCallback(self, msg):
         target_frame = self.player + '/odom'
@@ -211,46 +238,49 @@ class Driver:
             rospy.logerr('Could not get goal in the ' + target_frame + '! Goal ignored')
 
     def getLidarPointsCallback(self, msg):
-        z = 0
-        # Reset variables
-        self.lidarpoints_frontcamera = []
-        self.lidarpoints_backcamera = []
-        self.lidarpixels_frontcamera = []
-        self.lidarpixels_backcamera = []
-        self.lidarpixelsbig_frontcamera = []
-        self.lidarpixelsbig_backcamera = []
-        self.lidarcoordbig_frontcamera = []
-        self.lidarcoordbig_backcamera = []
-        for idx, range in enumerate(msg.ranges):
-            theta = msg.angle_min + idx * msg.angle_increment
-            x = range * math.cos(theta)
-            y = range * math.sin(theta)
-            posestamped = PoseStamped()
-            posestamped.header.frame_id = self.player + "/base_scan"
-            posestamped.header.stamp = rospy.Time(0)
-            point = Point()
-            point.x = x
-            point.y = y
-            point.z = z
-            posestamped.pose.position = point
-            # Separate front and back points
-            posestamped_front = copy.deepcopy(posestamped)
-            posestamped_back = copy.deepcopy(posestamped)
-            if posestamped_front.pose.position.x < 0:
-                posestamped_front.pose.position.x = math.inf
-                posestamped_front.pose.position.y = math.inf
-            if posestamped_back.pose.position.x > 0:
-                posestamped_back.pose.position.x = math.inf
-                posestamped_back.pose.position.y = math.inf
-            self.lidarpoints_frontcamera.append((posestamped_front.pose.position.x, posestamped_front.pose.position.y))
-            self.lidarpoints_backcamera.append((posestamped_back.pose.position.x, posestamped_back.pose.position.y))
-            # Tranform lidar cordenates to pixels in camera frame
-            self.lidar_points_to_pixels(posestamped_back, self.player + "/back_camera_rgb_optical_frame",
-                                        self.back_intrinsic, self.lidarpixels_backcamera,
-                                        self.lidarpixelsbig_backcamera, self.lidarcoordbig_backcamera)
-            self.lidar_points_to_pixels(posestamped_front, self.player + "/camera_rgb_optical_frame",
-                                        self.front_intrinsic, self.lidarpixels_frontcamera,
-                                        self.lidarpixelsbig_frontcamera, self.lidarcoordbig_frontcamera)
+        try:
+            z = 0
+            # Reset variables
+            self.lidarpoints_frontcamera = []
+            self.lidarpoints_backcamera = []
+            self.lidarpixels_frontcamera = []
+            self.lidarpixels_backcamera = []
+            self.lidarpixelsbig_frontcamera = []
+            self.lidarpixelsbig_backcamera = []
+            self.lidarcoordbig_frontcamera = []
+            self.lidarcoordbig_backcamera = []
+            for idx, range in enumerate(msg.ranges):
+                theta = msg.angle_min + idx * msg.angle_increment
+                x = range * math.cos(theta)
+                y = range * math.sin(theta)
+                posestamped = PoseStamped()
+                posestamped.header.frame_id = self.player + "/base_scan"
+                posestamped.header.stamp = rospy.Time(0)
+                point = Point()
+                point.x = x
+                point.y = y
+                point.z = z
+                posestamped.pose.position = point
+                # Separate front and back points
+                posestamped_front = copy.deepcopy(posestamped)
+                posestamped_back = copy.deepcopy(posestamped)
+                if posestamped_front.pose.position.x < 0:
+                    posestamped_front.pose.position.x = math.inf
+                    posestamped_front.pose.position.y = math.inf
+                if posestamped_back.pose.position.x > 0:
+                    posestamped_back.pose.position.x = math.inf
+                    posestamped_back.pose.position.y = math.inf
+                self.lidarpoints_frontcamera.append((posestamped_front.pose.position.x, posestamped_front.pose.position.y))
+                self.lidarpoints_backcamera.append((posestamped_back.pose.position.x, posestamped_back.pose.position.y))
+                # Tranform lidar cordenates to pixels in camera frame
+                self.lidar_points_to_pixels(posestamped_back, self.player + "/back_camera_rgb_optical_frame",
+                                            self.back_intrinsic, self.lidarpixels_backcamera,
+                                            self.lidarpixelsbig_backcamera, self.lidarcoordbig_backcamera)
+                self.lidar_points_to_pixels(posestamped_front, self.player + "/camera_rgb_optical_frame",
+                                            self.front_intrinsic, self.lidarpixels_frontcamera,
+                                            self.lidarpixelsbig_frontcamera, self.lidarcoordbig_frontcamera)
+        except ():
+            rospy.logerr('Error getting lidar points')
 
     def lidar_points_to_pixels(self, posestamped, frame, intrinsic, output, output2, coord_output):
         # Get the laser points in the camera frame
