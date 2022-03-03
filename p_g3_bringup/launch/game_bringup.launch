@@ -9,7 +9,7 @@
         <arg name="x_pos" value="0.0"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="false"/>
+        <arg name="visualize" value="true"/>
         <arg name="driver" value="true"/>
     </include>
 
@@ -17,33 +17,33 @@
         <arg name="player_name" value="red1"/>
     </include>
 
-    <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        <arg name="player_name" value="red2"/>
-        <arg name="player_color" value="Red"/>
-        <arg name="x_pos" value="1.0"/>
-        <arg name="y_pos" value="1.0"/>
-        <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="false"/>
-        <arg name="driver" value="true"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
+<!--        <arg name="player_name" value="red2"/>-->
+<!--        <arg name="player_color" value="Red"/>-->
+<!--        <arg name="x_pos" value="1.0"/>-->
+<!--        <arg name="y_pos" value="1.0"/>-->
+<!--        <arg name="z_pos" value="0.0"/>-->
+<!--        <arg name="visualize" value="false"/>-->
+<!--        <arg name="driver" value="true"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/gmapping.launch">
-        <arg name="player_name" value="red2"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
+<!--        <arg name="player_name" value="red2"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        <arg name="player_name" value="red3"/>
-        <arg name="player_color" value="Red"/>
-        <arg name="x_pos" value="0.0"/>
-        <arg name="y_pos" value="-1.5"/>
-        <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="false"/>
-        <arg name="driver" value="true"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
+<!--        <arg name="player_name" value="red3"/>-->
+<!--        <arg name="player_color" value="Red"/>-->
+<!--        <arg name="x_pos" value="0.0"/>-->
+<!--        <arg name="y_pos" value="-1.5"/>-->
+<!--        <arg name="z_pos" value="0.0"/>-->
+<!--        <arg name="visualize" value="false"/>-->
+<!--        <arg name="driver" value="true"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/gmapping.launch">
-        <arg name="player_name" value="red3"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
+<!--        <arg name="player_name" value="red3"/>-->
+<!--    </include>-->
 
     <!-- Green team-->
     <include file="$(find p_g3_bringup)/launch/bringup.launch">
@@ -60,33 +60,33 @@
         <arg name="player_name" value="green1"/>
     </include>
 
- -    <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        <arg name="player_name" value="green2"/>
-        <arg name="player_color" value="Green"/>
-        <arg name="x_pos" value="2.0"/>
-        <arg name="y_pos" value="1.0"/>
-        <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="false"/>
-        <arg name="driver" value="true"/>
-    </include>
+<!-- -    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
+<!--        <arg name="player_name" value="green2"/>-->
+<!--        <arg name="player_color" value="Green"/>-->
+<!--        <arg name="x_pos" value="2.0"/>-->
+<!--        <arg name="y_pos" value="1.0"/>-->
+<!--        <arg name="z_pos" value="0.0"/>-->
+<!--        <arg name="visualize" value="false"/>-->
+<!--        <arg name="driver" value="true"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/gmapping.launch">
-        <arg name="player_name" value="green2"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
+<!--        <arg name="player_name" value="green2"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        <arg name="player_name" value="green3"/>
-        <arg name="player_color" value="Green"/>
-        <arg name="x_pos" value="5.0"/>
-        <arg name="y_pos" value="-1.5"/>
-        <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="false"/>
-        <arg name="driver" value="true"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
+<!--        <arg name="player_name" value="green3"/>-->
+<!--        <arg name="player_color" value="Green"/>-->
+<!--        <arg name="x_pos" value="5.0"/>-->
+<!--        <arg name="y_pos" value="-1.5"/>-->
+<!--        <arg name="z_pos" value="0.0"/>-->
+<!--        <arg name="visualize" value="false"/>-->
+<!--        <arg name="driver" value="true"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/gmapping.launch">
-        <arg name="player_name" value="green3"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
+<!--        <arg name="player_name" value="green3"/>-->
+<!--    </include>-->
 
 <!--    &lt;!&ndash; Blue team&ndash;&gt;-->
     <include file="$(find p_g3_bringup)/launch/bringup.launch">
@@ -103,33 +103,33 @@
         <arg name="player_name" value="blue1"/>
     </include>
 
-    <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        <arg name="player_name" value="blue2"/>
-        <arg name="player_color" value="Blue"/>
-        <arg name="x_pos" value="1.0"/>
-        <arg name="y_pos" value="2.0"/>
-        <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="false"/>
-        <arg name="driver" value="true"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
+<!--        <arg name="player_name" value="blue2"/>-->
+<!--        <arg name="player_color" value="Blue"/>-->
+<!--        <arg name="x_pos" value="1.0"/>-->
+<!--        <arg name="y_pos" value="2.0"/>-->
+<!--        <arg name="z_pos" value="0.0"/>-->
+<!--        <arg name="visualize" value="false"/>-->
+<!--        <arg name="driver" value="true"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/gmapping.launch">
-        <arg name="player_name" value="blue2"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
+<!--        <arg name="player_name" value="blue2"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/bringup.launch">
-        <arg name="player_name" value="blue3"/>
-        <arg name="player_color" value="Blue"/>
-        <arg name="x_pos" value="-5.0"/>
-        <arg name="y_pos" value="-1.2"/>
-        <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" value="false"/>
-        <arg name="driver" value="true"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/bringup.launch">-->
+<!--        <arg name="player_name" value="blue3"/>-->
+<!--        <arg name="player_color" value="Blue"/>-->
+<!--        <arg name="x_pos" value="-5.0"/>-->
+<!--        <arg name="y_pos" value="-1.2"/>-->
+<!--        <arg name="z_pos" value="0.0"/>-->
+<!--        <arg name="visualize" value="false"/>-->
+<!--        <arg name="driver" value="true"/>-->
+<!--    </include>-->
 
-    <include file="$(find p_g3_bringup)/launch/gmapping.launch">
-        <arg name="player_name" value="blue3"/>
-    </include>
+<!--    <include file="$(find p_g3_bringup)/launch/gmapping.launch">-->
+<!--        <arg name="player_name" value="blue3"/>-->
+<!--    </include>-->
 
     <!-- Set players names -->
     <node name="set_player_names" pkg="th_referee" type="set_player_names" output="screen"/>
