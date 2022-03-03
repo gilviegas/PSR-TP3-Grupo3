@@ -9,7 +9,7 @@
         <arg name="x_pos" value="0.0"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" default="true"/>
+        <arg name="visualize" value="true"/>
         <arg name="driver" value="true"/>
     </include>
 
@@ -23,7 +23,7 @@
 <!--        <arg name="x_pos" value="1.0"/>-->
 <!--        <arg name="y_pos" value="1.0"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->
-<!--        <arg name="visualize" default="false"/>-->
+<!--        <arg name="visualize" value="false"/>-->
 <!--        <arg name="driver" value="true"/>-->
 <!--    </include>-->
 
@@ -37,7 +37,7 @@
 <!--        <arg name="x_pos" value="0.0"/>-->
 <!--        <arg name="y_pos" value="-1.5"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->
-<!--        <arg name="visualize" default="false"/>-->
+<!--        <arg name="visualize" value="false"/>-->
 <!--        <arg name="driver" value="true"/>-->
 <!--    </include>-->
 
@@ -52,7 +52,7 @@
         <arg name="x_pos" value="-1.5"/>
         <arg name="y_pos" value="0.0"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" default="false"/>
+        <arg name="visualize" value="false"/>
         <arg name="driver" value="true"/>
     </include>
 
@@ -66,7 +66,7 @@
 <!--        <arg name="x_pos" value="2.0"/>-->
 <!--        <arg name="y_pos" value="1.0"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->
-<!--        <arg name="visualize" default="false"/>-->
+<!--        <arg name="visualize" value="false"/>-->
 <!--        <arg name="driver" value="true"/>-->
 <!--    </include>-->
 
@@ -80,7 +80,7 @@
 <!--        <arg name="x_pos" value="5.0"/>-->
 <!--        <arg name="y_pos" value="-1.5"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->
-<!--        <arg name="visualize" default="false"/>-->
+<!--        <arg name="visualize" value="false"/>-->
 <!--        <arg name="driver" value="true"/>-->
 <!--    </include>-->
 
@@ -95,7 +95,7 @@
         <arg name="x_pos" value="-2.0"/>
         <arg name="y_pos" value="0.5"/>
         <arg name="z_pos" value="0.0"/>
-        <arg name="visualize" default="false"/>
+        <arg name="visualize" value="false"/>
         <arg name="driver" value="true"/>
     </include>
 
@@ -109,7 +109,7 @@
 <!--        <arg name="x_pos" value="1.0"/>-->
 <!--        <arg name="y_pos" value="2.0"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->
-<!--        <arg name="visualize" default="false"/>-->
+<!--        <arg name="visualize" value="false"/>-->
 <!--        <arg name="driver" value="true"/>-->
 <!--    </include>-->
 
@@ -123,7 +123,7 @@
 <!--        <arg name="x_pos" value="-5.0"/>-->
 <!--        <arg name="y_pos" value="-1.2"/>-->
 <!--        <arg name="z_pos" value="0.0"/>-->
-<!--        <arg name="visualize" default="false"/>-->
+<!--        <arg name="visualize" value="false"/>-->
 <!--        <arg name="driver" value="true"/>-->
 <!--    </include>-->
 

@@ -3,7 +3,6 @@
 import numpy as np
 import rospy
 from sensor_msgs.msg import Image, LaserScan, CameraInfo
-# from std_msgs.msg import Str
 from tf2_geometry_msgs import PoseStamped, tf2_geometry_msgs
 from geometry_msgs.msg import Twist, Point
 from cv_bridge import CvBridge

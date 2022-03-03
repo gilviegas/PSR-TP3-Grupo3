@@ -6,10 +6,10 @@
     <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
     <arg name="player_name" default="p_g3"/>   # set player name.
     <arg name="player_color" default="Red"/>        # set player color.
-    <arg name="visualize" default="True"/>          # set if we want to see rviz
     <arg name="x_pos" default="0.0"/>
     <arg name="y_pos" default="-1.5"/>
     <arg name="z_pos" default="0.0"/>
+    <arg name="visualize" default="false"/>          # set if we want to see rviz
     <arg name="driver" default="true"/>
 
     <group ns = "$(arg player_name)">
