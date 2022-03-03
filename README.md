@@ -8,7 +8,7 @@ Gonçalo Ribeiro Nº93193 (https://github.com/GoncaloR00)
 
 Pedro Ribeiro Nº94287 (https://github.com/PedroRibeiro37)
 
-Tomás Borges Nº
+Tomás Borges Nº93121 (https://github.com/tomastjcb)
 
 
 # Modos de Jogo
@@ -16,6 +16,8 @@ Condução Manual Turtlebot3 em Pista: https://youtu.be/OEAvULfRDtY
 
 Para a condução manual foi usado o robô de Cor vermelha("Red1") com as suas respetivas câmaras conseguindo assim evitar os obtáculos através do ficheiro myteleop desenvolvido nas aulas teóricas.
 
+Condução manual com uso do gmapping:https://youtu.be/Cv59HHV9rXU
+Para o gmapping foi utilizado o robô de cor vermelha ("Red1") na Arena 3.
 
 TeamHunt: Neste modo de jogo os robôs caçam e fogem de outros robôs, usando para isso um modo de condução automático.
 Para inciar este modo de jogo, começa-se por abrir o Gazebo
